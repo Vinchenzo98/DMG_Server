@@ -110,6 +110,14 @@ wss.on("connection", (ws) => {
                 increaseDefForAllPlayers(amount, isCritical)
                 break
             }
+
+            // Handle increaseDef case
+            case "shadowchainPlayerSkill": {
+                const amount = data.amount
+                const isCritical = data.isCritical
+                shadowchainsForAllPlayers(amount, isCritical)
+                break
+            }
         }
     })
 
@@ -225,6 +233,20 @@ function monsterAttackTimer() {
             client.send(
                 JSON.stringify({
                     type: "recieveAttackTimer",
+                })
+            )
+        }
+    })
+}
+
+function shadowchainsForAllPlayers(amount, isCritical) {
+    wss.clients.forEach(function each(client) {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(
+                JSON.stringify({
+                    type: "shadowchainPlayerSkill",
+                    amount: amount,
+                    isCritical: isCritical,
                 })
             )
         }
