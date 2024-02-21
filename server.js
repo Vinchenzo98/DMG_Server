@@ -49,13 +49,7 @@ wss.on("connection", (ws) => {
                     playerAfterAttackUpdate(playerAttack)
                 }
                 break
-            case "updatePositions":
-                monsterRotationPosition(
-                    data.playerPosition,
-                    data.monsterPosition,
-                    data.monsterRotation
-                )
-                break
+          
             case "sendAttackTimer":
                 monsterAttackTimer()
                 break
@@ -203,24 +197,7 @@ function playerAttackGlobalSkill(random) {
     })
 }
 
-function monsterRotationPosition(
-    playerPosition,
-    monsterPosition,
-    monsterRotation
-) {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(
-                JSON.stringify({
-                    type: "broadcastPositions",
-                    playerPosition: playerPosition,
-                    monsterPosition: monsterPosition,
-                    monsterRotation: monsterRotation,
-                })
-            )
-        }
-    })
-}
+
 
 function monsterAttackTimer() {
     wss.clients.forEach(function each(client) {
@@ -356,4 +333,4 @@ function increaseDefForAllPlayers(amount, isCritical) {
     })
 }
 
-console.log("Connected to Dice Master WebSocket Server localhost:8080")
+console.log("Connected to Dice Master WebSocket Server Heroku App")
