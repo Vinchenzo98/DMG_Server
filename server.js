@@ -116,6 +116,9 @@ wss.on("connection", (ws) => {
             case "enemyRunSend":{
                 updateEnemyRun()
             }break
+            case "enemyStopRunSend":{
+                updateEnemyRunStop()
+            }break
         }
     })
 
@@ -176,11 +179,18 @@ function playerAfterAttackUpdate(playerAttack) {
     })
 }
 
-
 function updateEnemyRun() {
     wss.clients.forEach(function each(client) {
         if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({ type: "enemyRunRecieve" }))
+        }
+    })
+}
+
+function updateEnemyRunStop() {
+    wss.clients.forEach(function each(client) {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ type: "enemyStopRunRecieve" }))
         }
     })
 }
