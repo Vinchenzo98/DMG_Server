@@ -112,6 +112,10 @@ wss.on("connection", (ws) => {
                 shadowchainsForAllPlayers(amount, isCritical)
                 break
             }
+
+            case "enemyRunSend":{
+                updateEnemyRun()
+            }break
         }
     })
 
@@ -142,6 +146,7 @@ function playerEngage() {
     })
 }
 
+
 function playerLeave() {
     wss.clients.forEach(function each(client) {
         if (client.readyState === WebSocket.OPEN) {
@@ -167,6 +172,15 @@ function playerAfterAttackUpdate(playerAttack) {
                     serverPlayerAttack: playerAttack,
                 })
             )
+        }
+    })
+}
+
+
+function updateEnemyRun() {
+    wss.clients.forEach(function each(client) {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ type: "enemyRunRecieve" }))
         }
     })
 }
