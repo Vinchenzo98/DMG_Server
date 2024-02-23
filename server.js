@@ -112,13 +112,19 @@ wss.on("connection", (ws) => {
                 shadowchainsForAllPlayers(amount, isCritical)
                 break
             }
-
-            case "enemyRunSend":{
-                updateEnemyRun()
-            }break
-            case "enemyStopRunSend":{
-                updateEnemyRunStop()
-            }break
+            case "monsterPositionUpdate":{
+                wss.clients.forEach(function each(client) {
+                    if (client !== ws && client.readyState === WebSocket.OPEN) {
+                        client.send(message); 
+                    }
+                });
+            } break
+            // case "enemyRunSend":{
+            //     updateEnemyRun()
+            // }break
+            // case "enemyStopRunSend":{
+            //     updateEnemyRunStop()
+            // }break
         }
     })
 
@@ -179,21 +185,23 @@ function playerAfterAttackUpdate(playerAttack) {
     })
 }
 
-function updateEnemyRun() {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({ type: "enemyRunRecieve" }))
-        }
-    })
-}
+// function updateEnemyRun() {
+//     wss.clients.forEach(function each(client) {
+//         if (client.readyState === WebSocket.OPEN) {
+//             client.send(JSON.stringify({ type: "enemyRunRecieve" }))
+//         }
+//     })
+// }
 
-function updateEnemyRunStop() {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({ type: "enemyStopRunRecieve" }))
-        }
-    })
-}
+// function updateEnemyRunStop() {
+//     wss.clients.forEach(function each(client) {
+//         if (client.readyState === WebSocket.OPEN) {
+//             client.send(JSON.stringify({ type: "enemyStopRunRecieve" }))
+//         }
+//     })
+// }
+
+
 
 function monsterAttackGlobalSkill(random) {
     wss.clients.forEach((client) => {
