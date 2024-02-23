@@ -114,7 +114,7 @@ wss.on("connection", (ws) => {
             }
             case "monsterPositionUpdate":{
                 wss.clients.forEach(function each(client) {
-                    if (client !== ws && client.readyState === WebSocket.OPEN) {
+                    if (ws && client.readyState === WebSocket.OPEN) {
                         client.send(message); 
                     }
                 });
