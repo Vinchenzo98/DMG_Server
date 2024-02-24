@@ -66,72 +66,72 @@ wss.on("connection", (ws) => {
             case "sendAttackTimer":
                 monsterAttackTimer()
                 break
-            // case "refillHealth": {
-            //     const amount = data.amount
-            //     const isCritical = data.isCritical
-            //     refillHealthForAllPlayers(amount, isCritical)
-            //     break
-            // }
-            // case "increaseAttack": {
-            //     const amount = data.amount
-            //     const isCritical = data.isCritical
-            //     increaseAttackForAllPlayers(amount, isCritical)
-            //     break
-            // }
-            // // Handle increaseMagic case
-            // case "increaseMagic": {
-            //     const amount = data.amount
-            //     const isCritical = data.isCritical
-            //     increaseMagicForAllPlayers(amount, isCritical)
-            //     break
-            // }
+            case "refillHealth": {
+                const amount = data.amount
+                const isCritical = data.isCritical
+                refillHealthForAllPlayers(amount, isCritical)
+                break
+            }
+            case "increaseAttack": {
+                const amount = data.amount
+                const isCritical = data.isCritical
+                increaseAttackForAllPlayers(amount, isCritical)
+                break
+            }
+            // Handle increaseMagic case
+            case "increaseMagic": {
+                const amount = data.amount
+                const isCritical = data.isCritical
+                increaseMagicForAllPlayers(amount, isCritical)
+                break
+            }
 
-            // // Handle increaseCritDamage case
-            // case "increaseCritDamage": {
-            //     const amount = data.amount
-            //     const isCritical = data.isCritical
-            //     increaseCritDamageForAllPlayers(amount, isCritical)
-            //     break
-            // }
+            // Handle increaseCritDamage case
+            case "increaseCritDamage": {
+                const amount = data.amount
+                const isCritical = data.isCritical
+                increaseCritDamageForAllPlayers(amount, isCritical)
+                break
+            }
 
-            // // Handle increaseCritRate case
-            // case "increaseCritRate": {
-            //     const amount = data.amount
-            //     const isCritical = data.isCritical
-            //     increaseCritRateForAllPlayers(amount, isCritical)
-            //     break
-            // }
+            // Handle increaseCritRate case
+            case "increaseCritRate": {
+                const amount = data.amount
+                const isCritical = data.isCritical
+                increaseCritRateForAllPlayers(amount, isCritical)
+                break
+            }
 
-            // // Handle increaseLuck case
-            // case "increaseLuck": {
-            //     const amount = data.amount
-            //     const isCritical = data.isCritical
-            //     increaseLuckForAllPlayers(amount, isCritical)
-            //     break
-            // }
+            // Handle increaseLuck case
+            case "increaseLuck": {
+                const amount = data.amount
+                const isCritical = data.isCritical
+                increaseLuckForAllPlayers(amount, isCritical)
+                break
+            }
 
-            // // Handle increaseDef case
-            // case "increaseDef": {
-            //     const amount = data.amount
-            //     const isCritical = data.isCritical
-            //     increaseDefForAllPlayers(amount, isCritical)
-            //     break
-            // }
+            // Handle increaseDef case
+            case "increaseDef": {
+                const amount = data.amount
+                const isCritical = data.isCritical
+                increaseDefForAllPlayers(amount, isCritical)
+                break
+            }
 
-            // // Handle increaseDef case
-            // case "shadowchainPlayerSkill": {
-            //     const amount = data.amount
-            //     const isCritical = data.isCritical
-            //     shadowchainsForAllPlayers(amount, isCritical)
-            //     break
-            // }
-            // case "monsterPositionUpdate":{
-            //     wss.clients.forEach(function each(client) {
-            //         if (client.readyState === WebSocket.OPEN) {
-            //             client.send(message); 
-            //         }
-            //     });
-            // } break
+            // Handle increaseDef case
+            case "shadowchainPlayerSkill": {
+                const amount = data.amount
+                const isCritical = data.isCritical
+                shadowchainsForAllPlayers(amount, isCritical)
+                break
+            }
+            case "monsterPositionUpdate":{
+                wss.clients.forEach(function each(client) {
+                    if (client.readyState === WebSocket.OPEN) {
+                        client.send(message); 
+                    }
+                });
+            } break
             case "enemyRunSend":{
                 updateEnemyRun()
             }break
