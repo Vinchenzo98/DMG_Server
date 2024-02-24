@@ -2,6 +2,14 @@ const WebSocket = require('ws');
 const PORT = process.env.PORT || 8080
 const wss = new WebSocket.Server({ port: PORT });
 
+const interval = setInterval(function ping() {
+    wss.clients.forEach(function each(ws) {
+      if (ws.isAlive === false) return ws.terminate();
+  
+      ws.isAlive = false;
+      ws.ping();
+    });
+  }, 30000); 
 
 function generatePlayerId() {
     const randomNum = Math.floor(1000 + Math.random() * 9000)
@@ -132,15 +140,6 @@ wss.on("connection", (ws) => {
             }break
         }
     })
-    const interval = setInterval(function ping() {
-        wss.clients.forEach(function each(ws) {
-          if (ws.isAlive === false) return ws.terminate();
-      
-          ws.isAlive = false;
-          ws.ping();
-        });
-      }, 30000); 
-      
 
 
     ws.on("close", (code, reason) => {
@@ -155,9 +154,6 @@ wss.on("connection", (ws) => {
     }
 })
 
-
-  
- 
 
 function playerHitMonster() {
     wss.clients.forEach(function each(client) {
