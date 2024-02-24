@@ -112,19 +112,19 @@ wss.on("connection", (ws) => {
                 shadowchainsForAllPlayers(amount, isCritical)
                 break
             }
-            case "monsterPositionUpdate":{
-                wss.clients.forEach(function each(client) {
-                    if (ws && client.readyState === WebSocket.OPEN) {
-                        client.send(message); 
-                    }
-                });
-            } break
-            // case "enemyRunSend":{
-            //     updateEnemyRun()
-            // }break
-            // case "enemyStopRunSend":{
-            //     updateEnemyRunStop()
-            // }break
+            // case "monsterPositionUpdate":{
+            //     wss.clients.forEach(function each(client) {
+            //         if (ws && client.readyState === WebSocket.OPEN) {
+            //             client.send(message); 
+            //         }
+            //     });
+            // } break
+            case "enemyRunSend":{
+                updateEnemyRun()
+            }break
+            case "enemyStopRunSend":{
+                updateEnemyRunStop()
+            }break
         }
     })
 
