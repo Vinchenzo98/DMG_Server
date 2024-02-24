@@ -2,14 +2,14 @@ const WebSocket = require('ws');
 const PORT = process.env.PORT || 8080
 const wss = new WebSocket.Server({ port: PORT });
 
-const interval = setInterval(function ping() {
-    wss.clients.forEach(function each(ws) {
-      if (ws.isAlive === false) return ws.terminate();
+// const interval = setInterval(function ping() {
+//     wss.clients.forEach(function each(ws) {
+//       if (ws.isAlive === false) return ws.terminate();
   
-      ws.isAlive = false;
-      ws.ping();
-    });
-  }, 30000); 
+//       ws.isAlive = false;
+//       ws.ping();
+//     });
+//   }, 30000); 
 
 function generatePlayerId() {
     const randomNum = Math.floor(1000 + Math.random() * 9000)
@@ -22,10 +22,10 @@ wss.on("connection", (ws) => {
     const playerId = generatePlayerId()
     ws.playerId = playerId
 
-    ws.isAlive = true;
-    ws.on('pong', () => {
-        ws.isAlive = true;
-    });
+    // ws.isAlive = true;
+    // ws.on('pong', () => {
+    //     ws.isAlive = true;
+    // });
    
     ws.on("message", (message) => {
         console.log("Received:", message)
@@ -146,7 +146,7 @@ wss.on("connection", (ws) => {
         console.log(
             `Connection closed by ${ws.playerId}. Code: ${code}, Reason: ${reason}`
         )
-        clearInterval(interval);
+       // clearInterval(interval);
     })
 
     ws.onerror = (error) => {
