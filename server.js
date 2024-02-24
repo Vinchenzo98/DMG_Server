@@ -14,6 +14,11 @@ wss.on("connection", (ws) => {
     const playerId = generatePlayerId()
     ws.playerId = playerId
 
+    ws.isAlive = true;
+    ws.on('pong', () => {
+        ws.isAlive = true;
+    });
+   
     ws.on("message", (message) => {
         console.log("Received:", message)
         const data = JSON.parse(message)
@@ -114,7 +119,7 @@ wss.on("connection", (ws) => {
             }
             // case "monsterPositionUpdate":{
             //     wss.clients.forEach(function each(client) {
-            //         if (ws && client.readyState === WebSocket.OPEN) {
+            //         if (client.readyState === WebSocket.OPEN) {
             //             client.send(message); 
             //         }
             //     });
@@ -127,6 +132,18 @@ wss.on("connection", (ws) => {
             }break
         }
     })
+    const interval = setInterval(function ping() {
+        wss.clients.forEach(function each(ws) {
+          if (ws.isAlive === false) return ws.terminate();
+      
+          ws.isAlive = false;
+          ws.ping();
+        });
+      }, 30000); 
+      
+      process.on('exit', () => {
+        clearInterval(interval);
+    });
 
     ws.on("close", (code, reason) => {
         console.log(
@@ -138,6 +155,10 @@ wss.on("connection", (ws) => {
         console.error("WebSocket error:", error)
     }
 })
+
+
+  
+ 
 
 function playerHitMonster() {
     wss.clients.forEach(function each(client) {
