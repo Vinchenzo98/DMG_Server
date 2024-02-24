@@ -141,14 +141,13 @@ wss.on("connection", (ws) => {
         });
       }, 30000); 
       
-      process.on('exit', () => {
-        clearInterval(interval);
-    });
+
 
     ws.on("close", (code, reason) => {
         console.log(
             `Connection closed by ${ws.playerId}. Code: ${code}, Reason: ${reason}`
         )
+        clearInterval(interval);
     })
 
     ws.onerror = (error) => {
