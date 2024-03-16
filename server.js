@@ -34,7 +34,7 @@ wss.on("connection", (ws) => {
                 const {userId, realm} = data
                 if(!realms[realm]) realms[realm] = {'bossRoom': []}
                 const room = realms[realm]['bossRoom'] 
-                if(room.length < 2){
+                if(room.length < 4){
                     room.push(ws)
                     users[userId] =  { ws, realm, roomId: 'bossRoom' };
                     console.log(`User ${userId} added to room 'bossRoom' in realm ${realm}`);
