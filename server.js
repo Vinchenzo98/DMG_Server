@@ -20,7 +20,16 @@ wss.on("connection", (ws) => {
         console.log("Received:", message)
         const data = JSON.parse(message)
 
+        const pingInterval = setInterval(() => {
+            ws.ping();
+            console.log("Pinged Server")
+          }, 30000);
+   
+          
         switch (data.type) {
+            case 'heartbeat':{
+                console.log('Heartbeat received', data);
+            } break;
             case 'initRoom':{
                 const {userId, realm} = data
                 if(!realms[realm]) realms[realm] = {'bossRoom': []}
@@ -158,10 +167,10 @@ wss.on("connection", (ws) => {
 
 
     ws.on("close", (code, reason) => {
+        clearInterval(pingInterval);
         console.log(
             `Connection closed by ${ws.playerId}. Code: ${code}, Reason: ${reason}`
         )
-       // clearInterval(interval);
     })
 
     ws.onerror = (error) => {
