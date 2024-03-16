@@ -2,11 +2,13 @@ const WebSocket = require('ws');
 const PORT = process.env.PORT || 8080
 const wss = new WebSocket.Server({ port: PORT });
 
-
 function generatePlayerId() {
     const randomNum = Math.floor(1000 + Math.random() * 9000)
     return `player${randomNum}`
 }
+
+const realms = {}
+const users = {}
 
 let monsterAttackTimers = {}
 
@@ -19,6 +21,32 @@ wss.on("connection", (ws) => {
         const data = JSON.parse(message)
 
         switch (data.type) {
+            case 'initRoom':{
+                const {userId, realm} = data
+                if(!realms[realm]) realms[realm] = {'bossRoom': []}
+                const room = realms[realm]['bossRoom'] 
+                if(room.length < 2){
+                    room.push(ws)
+                    users[userId] =  { ws, realm, roomId: 'bossRoom' };
+                    console.log(`User ${userId} added to room 'bossRoom' in realm ${realm}`);
+                    broadcastToRoom(realm, 'bossRoom', { type: "playerJoined", userId });
+                } else{
+                    console.log('Room is full.');
+                   // ws.close();
+                }
+            } break;
+            case 'playerLeave': {
+                const user = users[data.userId]
+                if(user){
+                    const { realm, roomId } = user;
+                    const roomIndex = realms[realm][roomId].indexOf(data.userId);
+                    if (roomIndex > -1) {
+                        realms[realm][roomId].splice(roomIndex, 1); 
+                        console.log(`User ${data.userId} left room '${roomId}' in realm ${realm}`);
+                    }
+                    delete users[data.userId];
+                }
+            }
             case "sendPlayerHitMonster":
                 playerHitMonster()
                 break
@@ -141,6 +169,26 @@ wss.on("connection", (ws) => {
     }
 })
 
+
+function broadcastToRoom(realmName, roomId, roomMsg){
+    const realmToBroadcast = realms[realmName]
+    if(!realmToBroadcast){
+        console.log(`Realm ${realmName} does not exist.`);
+        return;
+    }
+
+    const room = realmToBroadcast[roomId]
+    if(!room){
+        console.log(`Room ${roomId} in realm ${realmName} does not exist.`);
+        return;
+    }
+
+    room.forEach(client =>{
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(roomMsg));
+        }
+    })
+}
 
 function playerHitMonster() {
     wss.clients.forEach(function each(client) {
