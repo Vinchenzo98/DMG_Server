@@ -15,15 +15,15 @@ let monsterAttackTimers = {}
 wss.on("connection", (ws) => {
     const playerId = generatePlayerId()
     ws.playerId = playerId
+
+    const pingInterval = setInterval(() => {
+        ws.ping();
+        console.log("Pinged Server")
+      }, 30000);
    
     ws.on("message", (message) => {
         console.log("Received:", message)
         const data = JSON.parse(message)
-
-        const pingInterval = setInterval(() => {
-            ws.ping();
-            console.log("Pinged Server")
-          }, 30000);
    
           
         switch (data.type) {
