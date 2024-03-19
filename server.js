@@ -13,6 +13,7 @@ const users = {}
 let monsterAttackTimers = {}
 
 wss.on("connection", (ws) => {
+
     const playerId = generatePlayerId()
     ws.playerId = playerId
 
@@ -24,38 +25,70 @@ wss.on("connection", (ws) => {
     ws.on("message", (message) => {
         console.log("Received:", message)
         const data = JSON.parse(message)
-   
-          
+
         switch (data.type) {
-            case 'heartbeat':{
-                console.log('Heartbeat received', data);
-            } break;
-            case 'initRoom':{
-                const {userId, realm} = data
-                if(!realms[realm]) realms[realm] = {'bossRoom': []}
-                const room = realms[realm]['bossRoom'] 
-                if(room.length < 4){
-                    room.push(ws)
-                    users[userId] =  { ws, realm, roomId: 'bossRoom' };
-                    console.log(`User ${userId} added to room 'bossRoom' in realm ${realm}`);
-                    broadcastToRoom(realm, 'bossRoom', { type: "playerJoined", userId });
-                } else{
-                    console.log('Room is full.');
-                   // ws.close();
+           case 'startRoomSend':{
+            startRoomRecieve(ws);
+           } break;
+            case 'initRoom': {
+                const {userId, realm} = data;
+            
+                // Ensure the realm exists
+                if (!realms[realm]) {
+                    realms[realm] = {};
                 }
+            
+                let roomName = 'bossRoom'; // Initial room name
+                let room = realms[realm][roomName];
+            
+                // Find an available room or create a new one
+                let roomFound = false;
+                while (!roomFound) {
+                    if (!room || room.length >= 2) { // If room doesn't exist or is full
+                        if (room) {
+                            // If the room is full, create a new room name
+                            const roomIndex = Object.keys(realms[realm]).length + 1;
+                            roomName = 'bossRoom' + roomIndex;
+                        }
+                        // Create the new room
+                        realms[realm][roomName] = [];
+                        room = realms[realm][roomName];
+                    }
+                    roomFound = true;
+                }
+            
+                // Add the user to the found/created room
+                room.push(ws);
+                users[userId] = { ws, realm, roomId: roomName };
+                console.log(`User ${userId} added to room '${roomName}' in realm ${realm}`);
+                broadcastToRoom(realm, roomName, { type: "playerJoinedToClient", userId });
+            } break;
+            case 'leaveRoomSend':{
+                leaveRoomRecieve();
             } break;
             case 'playerLeave': {
-                const user = users[data.userId]
-                if(user){
-                    const { realm, roomId } = user;
-                    const roomIndex = realms[realm][roomId].indexOf(data.userId);
-                    if (roomIndex > -1) {
-                        realms[realm][roomId].splice(roomIndex, 1); 
-                        console.log(`User ${data.userId} left room '${roomId}' in realm ${realm}`);
+                const user = users[data.userId];
+                if (user) {
+                    const { ws, realm, roomId } = user; 
+                    const room = realms[realm][roomId];
+                    if (room) {
+                        const wsIndex = room.indexOf(ws); 
+                        if (wsIndex > -1) {
+                            room.splice(wsIndex, 1); 
+                            console.log(`User ${data.userId} left room '${roomId}' in realm ${realm}`);
+                            
+                            
+                            room.forEach(client => {
+                                if (client.readyState === WebSocket.OPEN) {
+                                    client.send(JSON.stringify({ type: "playerLeftToClient", userId: data.userId }));
+                                }
+                            });
+                        }
                     }
-                    delete users[data.userId];
+                    delete users[data.userId]; 
                 }
-            }
+            } break;
+            
             case "sendPlayerHitMonster":
                 playerHitMonster()
                 break
@@ -179,6 +212,7 @@ wss.on("connection", (ws) => {
 })
 
 
+  
 function broadcastToRoom(realmName, roomId, roomMsg){
     const realmToBroadcast = realms[realmName]
     if(!realmToBroadcast){
@@ -198,6 +232,21 @@ function broadcastToRoom(realmName, roomId, roomMsg){
         }
     })
 }
+
+function startRoomRecieve(targetClient){
+    if (targetClient.readyState === WebSocket.OPEN) {
+        targetClient.send(JSON.stringify({ type: "startRoomRecieve" }));
+    }
+}
+
+function leaveRoomRecieve(){
+    wss.clients.forEach(function each(client) {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ type: "leaveRoomRecieve" }))
+        }
+    })
+}
+
 
 function playerHitMonster() {
     wss.clients.forEach(function each(client) {
