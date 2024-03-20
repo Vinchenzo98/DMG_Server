@@ -27,9 +27,7 @@ wss.on("connection", (ws) => {
         const data = JSON.parse(message)
 
         switch (data.type) {
-           case 'startRoomSend':{
-            startRoomRecieve(ws);
-           } break;
+         
             case 'initRoom': {
                 const {userId, realm} = data;
             
@@ -44,7 +42,7 @@ wss.on("connection", (ws) => {
                 // Find an available room or create a new one
                 let roomFound = false;
                 while (!roomFound) {
-                    if (!room || room.length >= 2) { // If room doesn't exist or is full
+                    if (!room || room.length >= 1) { // If room doesn't exist or is full
                         if (room) {
                             // If the room is full, create a new room name
                             const roomIndex = Object.keys(realms[realm]).length + 1;
@@ -63,9 +61,7 @@ wss.on("connection", (ws) => {
                 console.log(`User ${userId} added to room '${roomName}' in realm ${realm}`);
                 broadcastToRoom(realm, roomName, { type: "playerJoinedToClient", userId });
             } break;
-            case 'leaveRoomSend':{
-                leaveRoomRecieve();
-            } break;
+         
             case 'playerLeave': {
                 const user = users[data.userId];
                 if (user) {
@@ -230,22 +226,11 @@ function broadcastToRoom(realmName, roomId, roomMsg){
         if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify(roomMsg));
         }
+        console.log("sent broadcastToRoom message")
     })
 }
 
-function startRoomRecieve(targetClient){
-    if (targetClient.readyState === WebSocket.OPEN) {
-        targetClient.send(JSON.stringify({ type: "startRoomRecieve" }));
-    }
-}
 
-function leaveRoomRecieve(){
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({ type: "leaveRoomRecieve" }))
-        }
-    })
-}
 
 
 function playerHitMonster() {
