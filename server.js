@@ -42,7 +42,7 @@ wss.on("connection", (ws) => {
                 // Find an available room or create a new one
                 let roomFound = false;
                 while (!roomFound) {
-                    if (!room || room.length >= 1) { // If room doesn't exist or is full
+                    if (!room || room.length >= 4) { 
                         if (room) {
                             // If the room is full, create a new room name
                             const roomIndex = Object.keys(realms[realm]).length + 1;
@@ -65,25 +65,33 @@ wss.on("connection", (ws) => {
             case 'playerLeave': {
                 const user = users[data.userId];
                 if (user) {
-                    const { ws, realm, roomId } = user; 
+                    const { ws, realm, roomId } = user;
                     const room = realms[realm][roomId];
                     if (room) {
-                        const wsIndex = room.indexOf(ws); 
+                        const wsIndex = room.indexOf(ws);
                         if (wsIndex > -1) {
-                            room.splice(wsIndex, 1); 
+                            room.splice(wsIndex, 1);
                             console.log(`User ${data.userId} left room '${roomId}' in realm ${realm}`);
                             
-                            
                             room.forEach(client => {
+                                console.log("forEach works")
                                 if (client.readyState === WebSocket.OPEN) {
-                                    client.send(JSON.stringify({ type: "playerLeftToClient", userId: data.userId }));
+                                    console.log("open websocket")
+                                    client.send(JSON.stringify({
+                                        type: "playerLeftToClient",
+                                        roomId: roomId 
+                                    }));
+                                    
+                                }else{
+                                    console.log("WebSocket is not open. Message not sent.");
                                 }
                             });
                         }
                     }
-                    delete users[data.userId]; 
+                    delete users[data.userId];
                 }
-            } break;
+                break;
+            }
             
             case "sendPlayerHitMonster":
                 playerHitMonster()
@@ -102,6 +110,7 @@ wss.on("connection", (ws) => {
                 break
             case "engageEnemySend":
                 playerEngage()
+                console.log("engageEnemySend has ran playerEngage")
                 break
             case "leaveEnemySend":
                 playerLeave()
@@ -208,6 +217,7 @@ wss.on("connection", (ws) => {
 })
 
 
+
   
 function broadcastToRoom(realmName, roomId, roomMsg){
     const realmToBroadcast = realms[realmName]
@@ -226,7 +236,6 @@ function broadcastToRoom(realmName, roomId, roomMsg){
         if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify(roomMsg));
         }
-        console.log("sent broadcastToRoom message")
     })
 }
 
