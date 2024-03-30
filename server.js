@@ -94,97 +94,310 @@ wss.on("connection", (ws) => {
             }
             
             case "sendPlayerHitMonster":
-                playerHitMonster()
+               // playerHitMonster()
+               {
+                const {userId} = data;
+                const user = users[userId];
+                if(!user){
+                    console.log(`User ${userId} not found.`);
+                    return;
+                }
+                const { realm, roomId } = user;
+ 
+                const playerHitMonsterMessage ={
+                    type: "receivePlayerHitMonster",
+                }
+                broadcastToRoom(realm, roomId, playerHitMonsterMessage)
+               }    
                 break
             case "sendGlobalSkillPlayerAttack":
-                {
+                         // monsterAttackGlobalSkill(random)
+                    // playerAttackUpdate()
+                    {         
+                        const {userId} = data;
+                        const random = Math.random() * 1000
+                        const user = users[userId];
+                        if(!user){
+                            console.log(`User ${userId} not found.`);
+                            return;
+                        }
+                        const { realm, roomId } = user;
+        
+                        const playerAttackSkillMessage ={
+                            type: "receivePlayerAttackGlobalSkill",
+                            random: random,
+                        }
+                        broadcastToRoom(realm, roomId, playerAttackSkillMessage)
+                    }  
+                    break
+            case "sendGlobalSkillMonsterAttack":            
+                   // monsterAttackGlobalSkill(random)
+                    // playerAttackUpdate()
+                {         
+                    const {userId} = data;
                     const random = Math.random() * 1000
-                    playerAttackGlobalSkill(random)
-                }
+                    const user = users[userId];
+                    if(!user){
+                        console.log(`User ${userId} not found.`);
+                        return;
+                    }
+                    const { realm, roomId } = user;
+    
+                    const monsterAttackMessage ={
+                        type: "receiveMonsterAttackGlobalSkill",
+                        random: random,
+                    }
+                    broadcastToRoom(realm, roomId, monsterAttackMessage)
+                }  
                 break
-            case "sendGlobalSkillMonsterAttack":
-                {
-                    const random = Math.random() * 1000
-                    monsterAttackGlobalSkill(random)
-                }
-                break
+               
             case "engageEnemySend":
-                playerEngage()
-                console.log("engageEnemySend has ran playerEngage")
+               // playerEngage()
+               {
+                const {userId} = data;
+                const user = users[userId];
+                if(!user){
+                    console.log(`User ${userId} not found.`);
+                    return;
+                }
+                const { realm, roomId } = user;
+
+                const playerEngageEnemyMessage ={
+                    type: "engageEnemyRecieve",
+                }
+                broadcastToRoom(realm, roomId, playerEngageEnemyMessage)
+               }    
                 break
             case "leaveEnemySend":
-                playerLeave()
+               // playerLeave()
+               {
+                const {userId} = data;
+                const user = users[userId];
+                if(!user){
+                    console.log(`User ${userId} not found.`);
+                    return;
+                }
+                const { realm, roomId } = user;
+
+                const playerLeaveEnemyMessage ={
+                    type: "leaveEnemyRecieve",
+                }
+                broadcastToRoom(realm, roomId, playerLeaveEnemyMessage)
+               }    
                 break
             case "sendPlayerAttack":
-                playerAttackUpdate()
+                {
+                    // playerAttackUpdate()
+                    const {userId, playerAttack} = data;
+                    const user = users[userId];
+                    if(!user){
+                        console.log(`User ${userId} not found.`);
+                        return;
+                    }
+                    const { realm, roomId } = user;
+    
+                    const playerAttackMessage ={
+                        type: "recievePlayerAttack",
+                        playerAttack: playerAttack,
+                        userId: userId,
+                    }
+                    broadcastToRoom(realm, roomId, playerAttackMessage)
+                }  
                 break
             case "sendAfterPlayerAttack":
                 {
-                    const playerAttack = data.serverPlayerAttack
-                    playerAfterAttackUpdate(playerAttack)
+                  //  const playerAttack = data.serverPlayerAttack
+                //   playerAfterAttackUpdate(playerAttack)
+
+                    const {userId, serverPlayerAttack} = data;
+                    const user = users[userId];
+                    if(!user){
+                        console.log(`User ${userId} not found.`);
+                        return;
+                    }
+                    const { realm, roomId } = user;
+    
+                    const playerAfterAttackMessage ={
+                        type: "recieveAfterPlayerAttack",
+                        playerAttack: serverPlayerAttack,
+                    }
+                    broadcastToRoom(realm, roomId, playerAfterAttackMessage)
                 }
                 break
           
-            case "sendAttackTimer":
-                monsterAttackTimer()
-                break
+            // case "sendAttackTimer":
+            //     monsterAttackTimer()
+            //     break
             case "refillHealth": {
-                const amount = data.amount
-                const isCritical = data.isCritical
-                refillHealthForAllPlayers(amount, isCritical)
+                const {userId, amount, isCritical} = data;
+                const user = users[userId];
+                if(!user){
+                    console.log(`User ${userId} not found.`);
+                    return;
+                }
+                const { realm, roomId } = user;
+
+                const refillHealthMessage ={
+                    type: "refillHealth",
+                    amount: amount,
+                    isCritical: isCritical,
+                }
+                broadcastToRoom(realm, roomId, refillHealthMessage)
+              //  const amount = data.amount
+              //  const isCritical = data.isCritical
+              //  refillHealthForAllPlayers(amount, isCritical)
                 break
             }
             case "increaseAttack": {
-                const amount = data.amount
-                const isCritical = data.isCritical
-                increaseAttackForAllPlayers(amount, isCritical)
+
+                const {userId, amount, isCritical} = data;
+                const user = users[userId];
+                if(!user){
+                    console.log(`User ${userId} not found.`);
+                    return;
+                }
+                const { realm, roomId } = user;
+
+                const attackMessage ={
+                    type: "increaseAttack",
+                    amount: amount,
+                    isCritical: isCritical,
+                }
+                broadcastToRoom(realm, roomId, attackMessage)
+                
+                //const amount = data.amount
+                //const isCritical = data.isCritical
+                //increaseAttackForAllPlayers(amount, isCritical)
                 break
             }
             // Handle increaseMagic case
             case "increaseMagic": {
-                const amount = data.amount
-                const isCritical = data.isCritical
-                increaseMagicForAllPlayers(amount, isCritical)
+                
+                const {userId, amount, isCritical} = data;
+                const user = users[userId];
+                if(!user){
+                    console.log(`User ${userId} not found.`);
+                    return;
+                }
+                const { realm, roomId } = user;
+
+                const magicMessage ={
+                    type: "increaseMagic",
+                    amount: amount,
+                    isCritical: isCritical,
+                }
+                broadcastToRoom(realm, roomId, magicMessage)
+              //  const amount = data.amount
+              //  const isCritical = data.isCritical
+              //  increaseMagicForAllPlayers(amount, isCritical)
                 break
             }
 
             // Handle increaseCritDamage case
             case "increaseCritDamage": {
-                const amount = data.amount
-                const isCritical = data.isCritical
-                increaseCritDamageForAllPlayers(amount, isCritical)
+                const {userId, amount, isCritical} = data;
+                const user = users[userId];
+                if(!user){
+                    console.log(`User ${userId} not found.`);
+                    return;
+                }
+                const { realm, roomId } = user;
+                const critDamageMessage ={
+                    type: "increaseCritDamage",
+                    amount: amount,
+                    isCritical: isCritical,
+                }
+                broadcastToRoom(realm, roomId, critDamageMessage)
+
+               // const amount = data.amount
+               // const isCritical = data.isCritical
+               // increaseCritDamageForAllPlayers(amount, isCritical)
                 break
             }
 
             // Handle increaseCritRate case
             case "increaseCritRate": {
-                const amount = data.amount
-                const isCritical = data.isCritical
-                increaseCritRateForAllPlayers(amount, isCritical)
+
+                const {userId, amount, isCritical} = data;
+                const user = users[userId];
+                if(!user){
+                    console.log(`User ${userId} not found.`);
+                    return;
+                }
+                const { realm, roomId } = user;
+                const increaseCritMessage ={
+                    type: "increaseCritRate",
+                    amount: amount,
+                    isCritical: isCritical,
+                }
+                broadcastToRoom(realm, roomId, increaseCritMessage)
+              //  const amount = data.amount
+              //  const isCritical = data.isCritical
+              //  increaseCritRateForAllPlayers(amount, isCritical)
                 break
             }
 
             // Handle increaseLuck case
             case "increaseLuck": {
-                const amount = data.amount
-                const isCritical = data.isCritical
-                increaseLuckForAllPlayers(amount, isCritical)
+                const {userId, amount, isCritical} = data;
+                const user = users[userId];
+                if(!user){
+                    console.log(`User ${userId} not found.`);
+                    return;
+                }
+                const { realm, roomId } = user;
+                const luckMessage ={
+                    type: "increaseLuck",
+                    amount: amount,
+                    isCritical: isCritical,
+                }
+                broadcastToRoom(realm, roomId, luckMessage)
+                //const amount = data.amount
+                //const isCritical = data.isCritical
+               // increaseLuckForAllPlayers(amount, isCritical)
                 break
             }
 
             // Handle increaseDef case
             case "increaseDef": {
-                const amount = data.amount
-                const isCritical = data.isCritical
-                increaseDefForAllPlayers(amount, isCritical)
+                const {userId, amount, isCritical} = data;
+                const user = users[userId];
+                if(!user){
+                    console.log(`User ${userId} not found.`);
+                    return;
+                }
+                const { realm, roomId } = user;
+                const defMessage ={
+                    type: "increaseDef",
+                    amount: amount,
+                    isCritical: isCritical,
+                }
+                broadcastToRoom(realm, roomId, defMessage)
+              //  const amount = data.amount
+               // const isCritical = data.isCritical
+               // increaseDefForAllPlayers(amount, isCritical)
                 break
             }
 
             // Handle increaseDef case
             case "shadowchainPlayerSkill": {
-                const amount = data.amount
-                const isCritical = data.isCritical
-                shadowchainsForAllPlayers(amount, isCritical)
+                const {userId, amount, isCritical} = data;
+                const user = users[userId];
+                if(!user){
+                    console.log(`User ${userId} not found.`);
+                    return;
+                }
+                const { realm, roomId } = user;
+                const shadowSkillMessage ={
+                    type: "shadowchainPlayerSkill",
+                    amount: amount,
+                    isCritical: isCritical,
+                }
+                broadcastToRoom(realm, roomId, shadowSkillMessage)
+                
+              //  const amount = data.amount
+              //  const isCritical = data.isCritical
+              //  shadowchainsForAllPlayers(amount, isCritical)
                 break
             }
             // case "monsterPosSend":{
@@ -194,12 +407,7 @@ wss.on("connection", (ws) => {
             //         }
             //     });
             // } break
-            case "enemyRunSend":{
-                updateEnemyRun()
-            }break
-            case "enemyStopRunSend":{
-                updateEnemyRunStop()
-            }break
+         
         }
     })
 
@@ -216,19 +424,11 @@ wss.on("connection", (ws) => {
     }
 })
 
-
-
   
 function broadcastToRoom(realmName, roomId, roomMsg){
-    const realmToBroadcast = realms[realmName]
-    if(!realmToBroadcast){
-        console.log(`Realm ${realmName} does not exist.`);
-        return;
-    }
-
-    const room = realmToBroadcast[roomId]
-    if(!room){
-        console.log(`Room ${roomId} in realm ${realmName} does not exist.`);
+    const roomClients = realms[realmName][roomId];
+    if (!roomClients) {
+        console.error(`Room ${roomId} in realm ${realmName} does not exist.`);
         return;
     }
 
@@ -240,232 +440,23 @@ function broadcastToRoom(realmName, roomId, roomMsg){
 }
 
 
-
-
-function playerHitMonster() {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({ type: "receivePlayerHitMonster" }))
-        }
-    })
-}
-
-function playerEngage() {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({ type: "engageEnemyRecieve" }))
-        }
-    })
-}
-
-
-function playerLeave() {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({ type: "leaveEnemyRecieve" }))
-        }
-    })
-}
-
-function playerAttackUpdate() {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({ type: "recievePlayerAttack" }))
-        }
-    })
-}
-
-function playerAfterAttackUpdate(playerAttack) {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(
-                JSON.stringify({
-                    type: "recieveAfterPlayerAttack",
-                    serverPlayerAttack: playerAttack,
-                })
-            )
-        }
-    })
-}
-
-// function updateEnemyRun() {
+// function monsterAttackTimer() {
 //     wss.clients.forEach(function each(client) {
-//         if (client.readyState === WebSocket.OPEN) {
-//             client.send(JSON.stringify({ type: "enemyRunRecieve" }))
-//         }
-//     })
-// }
-
-// function updateEnemyRunStop() {
-//     wss.clients.forEach(function each(client) {
-//         if (client.readyState === WebSocket.OPEN) {
-//             client.send(JSON.stringify({ type: "enemyStopRunRecieve" }))
+//         const playerId = client.playerId
+//         if (
+//             !monsterAttackTimers[playerId] ||
+//             Date.now() - monsterAttackTimers[playerId] >= 2000
+//         ) {
+//             monsterAttackTimers[playerId] = Date.now()
+//             client.send(
+//                 JSON.stringify({
+//                     type: "recieveAttackTimer",
+//                 })
+//             )
 //         }
 //     })
 // }
 
 
-
-function monsterAttackGlobalSkill(random) {
-    wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(
-                JSON.stringify({
-                    type: "receiveMonsterAttackGlobalSkill",
-                    random: random,
-                })
-            )
-        }
-    })
-}
-
-function playerAttackGlobalSkill(random) {
-    wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(
-                JSON.stringify({
-                    type: "receivePlayerAttackGlobalSkill",
-                    random: random,
-                })
-            )
-        }
-    })
-}
-
-
-
-function monsterAttackTimer() {
-    wss.clients.forEach(function each(client) {
-        const playerId = client.playerId
-        if (
-            !monsterAttackTimers[playerId] ||
-            Date.now() - monsterAttackTimers[playerId] >= 2000
-        ) {
-            monsterAttackTimers[playerId] = Date.now()
-            client.send(
-                JSON.stringify({
-                    type: "recieveAttackTimer",
-                })
-            )
-        }
-    })
-}
-
-function shadowchainsForAllPlayers(amount, isCritical) {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(
-                JSON.stringify({
-                    type: "shadowchainPlayerSkill",
-                    amount: amount,
-                    isCritical: isCritical,
-                })
-            )
-        }
-    })
-}
-
-function refillHealthForAllPlayers(amount, isCritical) {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(
-                JSON.stringify({
-                    type: "refillHealth",
-                    amount: amount,
-                    isCritical: isCritical,
-                })
-            )
-        }
-    })
-}
-
-function increaseAttackForAllPlayers(amount, isCritical) {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(
-                JSON.stringify({
-                    type: "increaseAttack",
-                    amount: amount,
-                    isCritical: isCritical,
-                })
-            )
-        }
-    })
-}
-
-// Function to increase magic for all players
-function increaseMagicForAllPlayers(amount, isCritical) {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(
-                JSON.stringify({
-                    type: "increaseMagic",
-                    amount: amount,
-                    isCritical: isCritical,
-                })
-            )
-        }
-    })
-}
-
-// Function to increase critDamage for all players
-function increaseCritDamageForAllPlayers(amount, isCritical) {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(
-                JSON.stringify({
-                    type: "increaseCritDamage",
-                    amount: amount,
-                    isCritical: isCritical,
-                })
-            )
-        }
-    })
-}
-
-// Function to increase critRate for all players
-function increaseCritRateForAllPlayers(amount, isCritical) {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(
-                JSON.stringify({
-                    type: "increaseCritRate",
-                    amount: amount,
-                    isCritical: isCritical,
-                })
-            )
-        }
-    })
-}
-
-// Function to increase luck for all players
-function increaseLuckForAllPlayers(amount, isCritical) {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(
-                JSON.stringify({
-                    type: "increaseLuck",
-                    amount: amount,
-                    isCritical: isCritical,
-                })
-            )
-        }
-    })
-}
-
-// Function to increase def for all players
-function increaseDefForAllPlayers(amount, isCritical) {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(
-                JSON.stringify({
-                    type: "increaseDef",
-                    amount: amount,
-                    isCritical: isCritical,
-                })
-            )
-        }
-    })
-}
 
 console.log("Connected to Dice Master WebSocket Server Heroku App")
