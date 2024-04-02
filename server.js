@@ -42,7 +42,7 @@ wss.on("connection", (ws) => {
                 // Find an available room or create a new one
                 let roomFound = false;
                 while (!roomFound) {
-                    if (!room || room.length >= 2) { 
+                    if (!room || room.length >= 3) { 
                         if (room) {
                             // If the room is full, create a new room name
                             const roomIndex = Object.keys(realms[realm]).length + 1;
