@@ -10,7 +10,7 @@ function generatePlayerId() {
 const realms = {}
 const users = {}
 
-let monsterAttackTimers = {}
+//let monsterAttackTimers = {}
 
 wss.on("connection", (ws) => {
 
@@ -42,7 +42,7 @@ wss.on("connection", (ws) => {
                 // Find an available room or create a new one
                 let roomFound = false;
                 while (!roomFound) {
-                    if (!room || room.length >= 4) { 
+                    if (!room || room.length >= 2) { 
                         if (room) {
                             // If the room is full, create a new room name
                             const roomIndex = Object.keys(realms[realm]).length + 1;
@@ -60,10 +60,11 @@ wss.on("connection", (ws) => {
                 users[userId] = { ws, realm, roomId: roomName };
                 console.log(`User ${userId} added to room '${roomName}' in realm ${realm}`);
                 broadcastToRoom(realm, roomName, { type: "playerJoinedToClient", userId });
+
             } break;
          
             case 'playerLeave': {
-                const user = users[data.userId];
+                const user = users[data.duserId];
                 if (user) {
                     const { ws, realm, roomId } = user;
                     const room = realms[realm][roomId];
@@ -432,7 +433,7 @@ function broadcastToRoom(realmName, roomId, roomMsg){
         return;
     }
 
-    room.forEach(client =>{
+    roomClients.forEach(client =>{
         if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify(roomMsg));
         }
