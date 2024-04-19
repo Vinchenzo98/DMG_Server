@@ -57,7 +57,7 @@ wss.on("connection", (ws) => {
                     realms[realm][roomName].push(ws);
                     users[userId] = { ws, realm, roomId: roomName };
                     console.log(`User ${userId} added to room '${roomName}' in realm ${realm}`);
-                    broadcastToRoom(realm, roomName, { type: "playerJoinedToClient", userId });
+                    broadcastToRoom(realm, roomName, { type: "playerJoinedToClient", userId: userId });
                 }
 
             } break;
@@ -87,7 +87,7 @@ wss.on("connection", (ws) => {
                                 if (remainingWs.readyState === WebSocket.OPEN) {
                                     console.log("open websocket")
                                     remainingWs.send(JSON.stringify({
-                                        type: "playerLeftToClients"
+                                        type: "playerLeftToClient"
                                     }));
                                     
                                 }else{
@@ -163,7 +163,6 @@ wss.on("connection", (ws) => {
                 break
                
             case "engageEnemySend":
-               // playerEngage()
                {
                 const {userId} = data;
                 const user = users[userId];
@@ -175,6 +174,7 @@ wss.on("connection", (ws) => {
 
                 const playerEngageEnemyMessage ={
                     type: "engageEnemyRecieve",
+                    userId: data.userId
                 }
                 broadcastToRoom(realm, roomId, playerEngageEnemyMessage)
                }    
@@ -217,8 +217,7 @@ wss.on("connection", (ws) => {
                 break
             case "sendAfterPlayerAttack":
                 {
-                  //  const playerAttack = data.serverPlayerAttack
-                //   playerAfterAttackUpdate(playerAttack)
+         
 
                     const {userId, serverPlayerAttack} = data;
                     const user = users[userId];
