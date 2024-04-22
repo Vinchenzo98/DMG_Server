@@ -77,7 +77,7 @@ wss.on("connection", (ws) => {
                 realms[realm][roomName].push(ws);
                 users[userId] = { ws, realm, roomId: roomName };
                 console.log(`User ${userId} added to room '${roomName}' in realm ${realm}`);
-                broadcastToRoom(realm, roomName, { type: "playerJoinedToClient", userId });
+                broadcastToRoom(realm, roomName, { type: "playerJoinedToClient", userId: userId });
             
                 break;
             }
