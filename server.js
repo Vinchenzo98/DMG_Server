@@ -35,34 +35,53 @@ wss.on("connection", (ws) => {
                 if (!realms[realm]) {
                     realms[realm] = {};
                 }
-
-                //Check for duplicate user
-                if(users[userId]){
-                    console.log(`Refreshing connection for existing user ${userId}.`);
-                    users[userId].ws = ws;
-                } else{
-                    let roomName = 'bossRoom'; 
-                    let lastRoomIndex = Object.keys(realms[realm]).length; // Get the last room index
-                    let lastRoomName = lastRoomIndex > 0 ? 'bossRoom' + lastRoomIndex : 'bossRoom'; // Determine the last room's name
-                    let lastRoom = realms[realm][lastRoomName]; // Get the last room
-                
-                    if (!lastRoom || lastRoom.length >= 2) { 
-                        const newRoomIndex = lastRoomIndex + 1;
-                        roomName = 'bossRoom' + newRoomIndex;
-                        realms[realm][roomName] = [];
-                    } else {
-                        roomName = lastRoomName;
-                    }
-                
-                    realms[realm][roomName].push(ws);
-                    users[userId] = { ws, realm, roomId: roomName };
-                    console.log(`User ${userId} added to room '${roomName}' in realm ${realm}`);
-                    broadcastToRoom(realm, roomName, { type: "playerJoinedToClient", userId: userId });
-                }
-
-            } break;
             
-         
+                // Initialize room name
+                let roomName = 'bossRoom';
+            
+                // Check for duplicate user
+                if(users[userId]) {
+                    console.log(`Refreshing connection for existing user ${userId}.`);
+                    // Close existing WebSocket connection if it's different from the new one
+                    if(users[userId].ws !== ws && users[userId].ws.readyState === WebSocket.OPEN) {
+                        users[userId].ws.close(1001, "Replaced by new connection");
+                    }
+                    
+                    // Remove user from their current room if they are listed
+                    const currentRoom = realms[users[userId].realm][users[userId].roomId];
+                    if(currentRoom) {
+                        const index = currentRoom.indexOf(users[userId].ws);
+                        if(index > -1) {
+                            currentRoom.splice(index, 1);
+                            if(currentRoom.length === 0) {
+                                delete realms[users[userId].realm][users[userId].roomId];
+                            }
+                        }
+                    }
+                }
+            
+                // Determine the room they should be placed into
+                let lastRoomIndex = Object.keys(realms[realm]).length;
+                let lastRoomName = lastRoomIndex > 0 ? 'bossRoom' + lastRoomIndex : 'bossRoom';
+                let lastRoom = realms[realm][lastRoomName];
+            
+                if (!lastRoom || lastRoom.length >= 2) {
+                    const newRoomIndex = lastRoomIndex + 1;
+                    roomName = 'bossRoom' + newRoomIndex;
+                    realms[realm][roomName] = [];
+                } else {
+                    roomName = lastRoomName;
+                }
+            
+                // Add the user to the new or existing room
+                realms[realm][roomName].push(ws);
+                users[userId] = { ws, realm, roomId: roomName };
+                console.log(`User ${userId} added to room '${roomName}' in realm ${realm}`);
+                broadcastToRoom(realm, roomName, { type: "playerJoinedToClient", userId });
+            
+                break;
+            }
+             
             case 'playerLeave': {
                 const user = users[data.userId];
                 console.log("playerLeave server recieve msg")
@@ -79,17 +98,18 @@ wss.on("connection", (ws) => {
                             if(room.length === 0){
                                 delete realms[realm][roomId];
                                 console.log(`Room ${roomId} was deleted from ${realm}`)
+                                //add broadcastToRoom for single players
                             }
                             room.forEach((remainingWs, index) => {
                                 console.log(`Remaining connections in room '${roomId}':`);
                                 const remainingUserId = Object.keys(users).find(userId => users[userId].ws === remainingWs);
                                 console.log(`Index: ${index}, UserID: ${remainingUserId}`);
                                 if (remainingWs.readyState === WebSocket.OPEN) {
-                                    console.log("open websocket")
                                     remainingWs.send(JSON.stringify({
-                                        type: "playerLeftToClient"
+                                        type: "playerLeftToClient",
+                                        userId: data.userId
                                     }));
-                                    
+                                    console.log(user)
                                 }else{
                                     console.log("WebSocket is not open. Message not sent.");
                                 }
