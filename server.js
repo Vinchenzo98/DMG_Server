@@ -61,7 +61,8 @@ wss.on("connection", (ws) => {
                 }
 
             } break;
-             
+            
+         
             case 'playerLeave': {
                 const user = users[data.userId];
                 console.log("playerLeave server recieve msg")
@@ -78,16 +79,18 @@ wss.on("connection", (ws) => {
                             if(room.length === 0){
                                 delete realms[realm][roomId];
                                 console.log(`Room ${roomId} was deleted from ${realm}`)
-                                //add broadcastToRoom for single players
                             }
                             room.forEach((remainingWs, index) => {
                                 console.log(`Remaining connections in room '${roomId}':`);
                                 const remainingUserId = Object.keys(users).find(userId => users[userId].ws === remainingWs);
                                 console.log(`Index: ${index}, UserID: ${remainingUserId}`);
                                 if (remainingWs.readyState === WebSocket.OPEN) {
+                                    console.log("open websocket")
                                     remainingWs.send(JSON.stringify({
                                         type: "playerLeftToClient",
-                                     }));
+                                        userId: data.userId
+                                    }));
+                                    
                                 }else{
                                     console.log("WebSocket is not open. Message not sent.");
                                 }
