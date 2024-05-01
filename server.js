@@ -29,7 +29,7 @@ wss.on("connection", (ws) => {
         switch (data.type) {
          
             case 'initRoom': {
-                const {userId, realm} = data;
+                const {userId, realm, playerName} = data;
             
                 // Ensure the realm exists
                 if (!realms[realm]) {
@@ -38,7 +38,7 @@ wss.on("connection", (ws) => {
 
                 //Check for duplicate user
                 if(users[userId]){
-                    console.log(`Refreshing connection for existing user ${userId}.`);
+                    console.log(`Refreshing connection for existing user ${userId}`);
                     users[userId].ws = ws;
                 } else{
                     let roomName = 'bossRoom'; 
@@ -46,7 +46,7 @@ wss.on("connection", (ws) => {
                     let lastRoomName = lastRoomIndex > 0 ? 'bossRoom' + lastRoomIndex : 'bossRoom'; // Determine the last room's name
                     let lastRoom = realms[realm][lastRoomName]; // Get the last room
                 
-                    if (!lastRoom || lastRoom.length >= 2) { 
+                    if (!lastRoom || lastRoom.length >= 1) { 
                         const newRoomIndex = lastRoomIndex + 1;
                         roomName = 'bossRoom' + newRoomIndex;
                         realms[realm][roomName] = [];
@@ -55,9 +55,9 @@ wss.on("connection", (ws) => {
                     }
                 
                     realms[realm][roomName].push(ws);
-                    users[userId] = { ws, realm, roomId: roomName };
+                    users[userId] = { ws, realm, roomId: roomName}; 
                     console.log(`User ${userId} added to room '${roomName}' in realm ${realm}`);
-                    broadcastToRoom(realm, roomName, { type: "playerJoinedToClient", userId: userId });
+                    broadcastToRoom(realm, roomName, { type: "playerJoinedToClient", userId: userId, roomId: roomName, playerName: playerName });
                 }
 
             } break;
@@ -65,6 +65,7 @@ wss.on("connection", (ws) => {
          
             case 'playerLeave': {
                 const user = users[data.userId];
+                const playerName = data.playerName;
                 console.log("playerLeave server recieve msg")
                 if (user) {
                     const { ws, realm, roomId } = user;
@@ -88,7 +89,9 @@ wss.on("connection", (ws) => {
                                     console.log("open websocket")
                                     remainingWs.send(JSON.stringify({
                                         type: "playerLeftToClient",
-                                        userId: data.userId
+                                        userId: data.userId,
+                                        roomId: roomId,
+                                        playerName: playerName
                                     }));
                                     
                                 }else{
