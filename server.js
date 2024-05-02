@@ -1,6 +1,6 @@
-const WebSocket = require('ws');
+const WebSocket = require("ws")
 const PORT = process.env.PORT || 8080
-const wss = new WebSocket.Server({ port: PORT });
+const wss = new WebSocket.Server({ port: PORT })
 
 function generatePlayerId() {
     const randomNum = Math.floor(1000 + Math.random() * 9000)
@@ -13,15 +13,14 @@ const users = {}
 //let monsterAttackTimers = {}
 
 wss.on("connection", (ws) => {
-
     const playerId = generatePlayerId()
     ws.playerId = playerId
-
+    
     const pingInterval = setInterval(() => {
-        ws.ping();
+        ws.ping()
         console.log("Pinged Server")
-      }, 30000);
-   
+    }, 30000)
+
     ws.on("message", (message) => {
         console.log("Received:", message)
         const data = JSON.parse(message)
@@ -109,258 +108,295 @@ wss.on("connection", (ws) => {
             } break;
             
             case "sendPlayerHitMonster":
-               // playerHitMonster()
-               {
-                const {userId} = data;
-                const user = users[userId];
-                if(!user){
-                    console.log(`User ${userId} not found.`);
-                    return;
+                // playerHitMonster()
+                {
+                    const { userId } = data
+                    const user = users[userId]
+                    if (!user) {
+                        console.log(`User ${userId} not found.`)
+                        return
+                    }
+                    const { realm, roomId } = user
+
+                    const playerHitMonsterMessage = {
+                        type: "receivePlayerHitMonster",
+                    }
+                    broadcastToRoom(realm, roomId, playerHitMonsterMessage)
                 }
-                const { realm, roomId } = user;
- 
-                const playerHitMonsterMessage ={
-                    type: "receivePlayerHitMonster",
-                }
-                broadcastToRoom(realm, roomId, playerHitMonsterMessage)
-               }    
                 break
             case "sendGlobalSkillPlayerAttack":
-                         // monsterAttackGlobalSkill(random)
-                    // playerAttackUpdate()
-                    {         
-                        const {userId} = data;
-                        const random = Math.random() * 1000
-                        const user = users[userId];
-                        if(!user){
-                            console.log(`User ${userId} not found.`);
-                            return;
-                        }
-                        const { realm, roomId } = user;
-        
-                        const playerAttackSkillMessage ={
-                            type: "receivePlayerAttackGlobalSkill",
-                            random: random,
-                        }
-                        broadcastToRoom(realm, roomId, playerAttackSkillMessage)
-                    }  
-                    break
-            case "sendGlobalSkillMonsterAttack":            
-                   // monsterAttackGlobalSkill(random)
-                    // playerAttackUpdate()
-                {         
-                    const {userId} = data;
+                // monsterAttackGlobalSkill(random)
+                // playerAttackUpdate()
+                {
+                    const { userId } = data
                     const random = Math.random() * 1000
-                    const user = users[userId];
-                    if(!user){
-                        console.log(`User ${userId} not found.`);
-                        return;
+                    const user = users[userId]
+                    if (!user) {
+                        console.log(`User ${userId} not found.`)
+                        return
                     }
-                    const { realm, roomId } = user;
-    
-                    const monsterAttackMessage ={
+                    const { realm, roomId } = user
+
+                    const playerAttackSkillMessage = {
+                        type: "receivePlayerAttackGlobalSkill",
+                        random: random,
+                    }
+                    broadcastToRoom(realm, roomId, playerAttackSkillMessage)
+                }
+                break
+            case "sendGlobalSkillMonsterAttack":
+                // monsterAttackGlobalSkill(random)
+                // playerAttackUpdate()
+                {
+                    const { userId } = data
+                    const random = Math.random() * 1000
+                    const user = users[userId]
+                    if (!user) {
+                        console.log(`User ${userId} not found.`)
+                        return
+                    }
+                    const { realm, roomId } = user
+
+                    const monsterAttackMessage = {
                         type: "receiveMonsterAttackGlobalSkill",
                         random: random,
                     }
                     broadcastToRoom(realm, roomId, monsterAttackMessage)
-                }  
+                }
                 break
-               
-            case "engageEnemySend":
-               {
-                const {userId} = data;
-                const user = users[userId];
-                if(!user){
-                    console.log(`User ${userId} not found.`);
-                    return;
-                }
-                const { realm, roomId } = user;
 
-                const playerEngageEnemyMessage ={
-                    type: "engageEnemyRecieve",
-                    userId: data.userId
+            case "engageEnemySend":
+                {
+                    const { userId } = data
+                    const user = users[userId]
+                    if (!user) {
+                        console.log(`User ${userId} not found.`)
+                        return
+                    }
+                    const { realm, roomId } = user
+
+                    const playerEngageEnemyMessage = {
+                        type: "engageEnemyRecieve",
+                        userId: data.userId,
+                    }
+                    broadcastToRoom(realm, roomId, playerEngageEnemyMessage)
                 }
-                broadcastToRoom(realm, roomId, playerEngageEnemyMessage)
-               }    
                 break
             case "leaveEnemySend":
-               // playerLeave()
-               {
-                const {userId} = data;
-                const user = users[userId];
-                if(!user){
-                    console.log(`User ${userId} not found.`);
-                    return;
-                }
-                const { realm, roomId } = user;
+                // playerLeave()
+                {
+                    const { userId } = data
+                    const user = users[userId]
+                    if (!user) {
+                        console.log(`User ${userId} not found.`)
+                        return
+                    }
+                    const { realm, roomId } = user
 
-                const playerLeaveEnemyMessage ={
-                    type: "leaveEnemyRecieve",
+                    const playerLeaveEnemyMessage = {
+                        type: "leaveEnemyRecieve",
+                    }
+                    broadcastToRoom(realm, roomId, playerLeaveEnemyMessage)
                 }
-                broadcastToRoom(realm, roomId, playerLeaveEnemyMessage)
-               }    
                 break
             case "sendPlayerAttack":
                 {
                     // playerAttackUpdate()
-                    const {userId, playerAttack} = data;
-                    const user = users[userId];
-                    if(!user){
-                        console.log(`User ${userId} not found.`);
-                        return;
+                    const { userId, playerAttack } = data
+                    const user = users[userId]
+                    if (!user) {
+                        console.log(`User ${userId} not found.`)
+                        return
                     }
-                    const { realm, roomId } = user;
-    
-                    const playerAttackMessage ={
+                    const { realm, roomId } = user
+
+                    const playerAttackMessage = {
                         type: "recievePlayerAttack",
                         playerAttack: playerAttack,
                         userId: userId,
                     }
                     broadcastToRoom(realm, roomId, playerAttackMessage)
-                }  
+                }
                 break
             case "sendAfterPlayerAttack":
                 {
-         
-
-                    const {userId, serverPlayerAttack} = data;
-                    const user = users[userId];
-                    if(!user){
-                        console.log(`User ${userId} not found.`);
-                        return;
+                    const { userId, serverPlayerAttack } = data
+                    const user = users[userId]
+                    if (!user) {
+                        console.log(`User ${userId} not found.`)
+                        return
                     }
-                    const { realm, roomId } = user;
-    
-                    const playerAfterAttackMessage ={
+                    const { realm, roomId } = user
+
+                    const playerAfterAttackMessage = {
                         type: "recieveAfterPlayerAttack",
                         playerAttack: serverPlayerAttack,
                     }
                     broadcastToRoom(realm, roomId, playerAfterAttackMessage)
                 }
                 break
-          
+
             // case "sendAttackTimer":
             //     monsterAttackTimer()
             //     break
             case "refillHealth": {
-                const {userId, amount, isCritical} = data;
-                const user = users[userId];
-                if(!user){
-                    console.log(`User ${userId} not found.`);
-                    return;
+                const { userId, amount, isCritical } = data
+                const user = users[userId]
+                if (!user) {
+                    console.log(`User ${userId} not found.`)
+                    return
                 }
-                const { realm, roomId } = user;
+                const { realm, roomId } = user
 
-                const refillHealthMessage ={
+                const refillHealthMessage = {
                     type: "refillHealth",
                     amount: amount,
                     isCritical: isCritical,
                 }
                 broadcastToRoom(realm, roomId, refillHealthMessage)
-              //  const amount = data.amount
-              //  const isCritical = data.isCritical
-              //  refillHealthForAllPlayers(amount, isCritical)
+                //  const amount = data.amount
+                //  const isCritical = data.isCritical
+                //  refillHealthForAllPlayers(amount, isCritical)
                 break
             }
-            case "increaseAttack": {
 
-                const {userId, amount, isCritical} = data;
-                const user = users[userId];
-                if(!user){
-                    console.log(`User ${userId} not found.`);
-                    return;
+            case "decreaseHealth": {
+                const { userId, amount, isCritical } = data
+                const user = users[userId]
+                if (!user) {
+                    console.log(`User ${userId} not found.`)
+                    return
                 }
-                const { realm, roomId } = user;
+                const { realm, roomId } = user
 
-                const attackMessage ={
+                const decreaseHealthMessage = {
+                    type: "decreaseHealth",
+                    amount: amount,
+                    isCritical: isCritical,
+                }
+                broadcastToRoom(realm, roomId, decreaseHealthMessage)
+                break
+            }
+
+            case "increaseAttack": {
+                const { userId, amount, isCritical } = data
+                const user = users[userId]
+                if (!user) {
+                    console.log(`User ${userId} not found.`)
+                    return
+                }
+                const { realm, roomId } = user
+
+                const attackMessage = {
                     type: "increaseAttack",
                     amount: amount,
                     isCritical: isCritical,
                 }
                 broadcastToRoom(realm, roomId, attackMessage)
-                
+
                 //const amount = data.amount
                 //const isCritical = data.isCritical
                 //increaseAttackForAllPlayers(amount, isCritical)
                 break
             }
+
+            case "decreaseAttack": {
+                const { userId, amount, isCritical } = data
+                const user = users[userId]
+                if (!user) {
+                    console.log(`User ${userId} not found.`)
+                    return
+                }
+                const { realm, roomId } = user
+
+                const attackMessage = {
+                    type: "decreaseAttack",
+                    amount: amount,
+                    isCritical: isCritical,
+                }
+                broadcastToRoom(realm, roomId, attackMessage)
+
+                //const amount = data.amount
+                //const isCritical = data.isCritical
+                //increaseAttackForAllPlayers(amount, isCritical)
+                break
+            }
+
             // Handle increaseMagic case
             case "increaseMagic": {
-                
-                const {userId, amount, isCritical} = data;
-                const user = users[userId];
-                if(!user){
-                    console.log(`User ${userId} not found.`);
-                    return;
+                const { userId, amount, isCritical } = data
+                const user = users[userId]
+                if (!user) {
+                    console.log(`User ${userId} not found.`)
+                    return
                 }
-                const { realm, roomId } = user;
+                const { realm, roomId } = user
 
-                const magicMessage ={
+                const magicMessage = {
                     type: "increaseMagic",
                     amount: amount,
                     isCritical: isCritical,
                 }
                 broadcastToRoom(realm, roomId, magicMessage)
-              //  const amount = data.amount
-              //  const isCritical = data.isCritical
-              //  increaseMagicForAllPlayers(amount, isCritical)
+                //  const amount = data.amount
+                //  const isCritical = data.isCritical
+                //  increaseMagicForAllPlayers(amount, isCritical)
                 break
             }
 
             // Handle increaseCritDamage case
             case "increaseCritDamage": {
-                const {userId, amount, isCritical} = data;
-                const user = users[userId];
-                if(!user){
-                    console.log(`User ${userId} not found.`);
-                    return;
+                const { userId, amount, isCritical } = data
+                const user = users[userId]
+                if (!user) {
+                    console.log(`User ${userId} not found.`)
+                    return
                 }
-                const { realm, roomId } = user;
-                const critDamageMessage ={
+                const { realm, roomId } = user
+                const critDamageMessage = {
                     type: "increaseCritDamage",
                     amount: amount,
                     isCritical: isCritical,
                 }
                 broadcastToRoom(realm, roomId, critDamageMessage)
 
-               // const amount = data.amount
-               // const isCritical = data.isCritical
-               // increaseCritDamageForAllPlayers(amount, isCritical)
+                // const amount = data.amount
+                // const isCritical = data.isCritical
+                // increaseCritDamageForAllPlayers(amount, isCritical)
                 break
             }
 
             // Handle increaseCritRate case
             case "increaseCritRate": {
-
-                const {userId, amount, isCritical} = data;
-                const user = users[userId];
-                if(!user){
-                    console.log(`User ${userId} not found.`);
-                    return;
+                const { userId, amount, isCritical } = data
+                const user = users[userId]
+                if (!user) {
+                    console.log(`User ${userId} not found.`)
+                    return
                 }
-                const { realm, roomId } = user;
-                const increaseCritMessage ={
+                const { realm, roomId } = user
+                const increaseCritMessage = {
                     type: "increaseCritRate",
                     amount: amount,
                     isCritical: isCritical,
                 }
                 broadcastToRoom(realm, roomId, increaseCritMessage)
-              //  const amount = data.amount
-              //  const isCritical = data.isCritical
-              //  increaseCritRateForAllPlayers(amount, isCritical)
+                //  const amount = data.amount
+                //  const isCritical = data.isCritical
+                //  increaseCritRateForAllPlayers(amount, isCritical)
                 break
             }
 
             // Handle increaseLuck case
             case "increaseLuck": {
-                const {userId, amount, isCritical} = data;
-                const user = users[userId];
-                if(!user){
-                    console.log(`User ${userId} not found.`);
-                    return;
+                const { userId, amount, isCritical } = data
+                const user = users[userId]
+                if (!user) {
+                    console.log(`User ${userId} not found.`)
+                    return
                 }
-                const { realm, roomId } = user;
-                const luckMessage ={
+                const { realm, roomId } = user
+                const luckMessage = {
                     type: "increaseLuck",
                     amount: amount,
                     isCritical: isCritical,
@@ -368,50 +404,50 @@ wss.on("connection", (ws) => {
                 broadcastToRoom(realm, roomId, luckMessage)
                 //const amount = data.amount
                 //const isCritical = data.isCritical
-               // increaseLuckForAllPlayers(amount, isCritical)
+                // increaseLuckForAllPlayers(amount, isCritical)
                 break
             }
 
             // Handle increaseDef case
             case "increaseDef": {
-                const {userId, amount, isCritical} = data;
-                const user = users[userId];
-                if(!user){
-                    console.log(`User ${userId} not found.`);
-                    return;
+                const { userId, amount, isCritical } = data
+                const user = users[userId]
+                if (!user) {
+                    console.log(`User ${userId} not found.`)
+                    return
                 }
-                const { realm, roomId } = user;
-                const defMessage ={
+                const { realm, roomId } = user
+                const defMessage = {
                     type: "increaseDef",
                     amount: amount,
                     isCritical: isCritical,
                 }
                 broadcastToRoom(realm, roomId, defMessage)
-              //  const amount = data.amount
-               // const isCritical = data.isCritical
-               // increaseDefForAllPlayers(amount, isCritical)
+                //  const amount = data.amount
+                // const isCritical = data.isCritical
+                // increaseDefForAllPlayers(amount, isCritical)
                 break
             }
 
             // Handle increaseDef case
             case "shadowchainPlayerSkill": {
-                const {userId, amount, isCritical} = data;
-                const user = users[userId];
-                if(!user){
-                    console.log(`User ${userId} not found.`);
-                    return;
+                const { userId, amount, isCritical } = data
+                const user = users[userId]
+                if (!user) {
+                    console.log(`User ${userId} not found.`)
+                    return
                 }
-                const { realm, roomId } = user;
-                const shadowSkillMessage ={
+                const { realm, roomId } = user
+                const shadowSkillMessage = {
                     type: "shadowchainPlayerSkill",
                     amount: amount,
                     isCritical: isCritical,
                 }
                 broadcastToRoom(realm, roomId, shadowSkillMessage)
-                
-              //  const amount = data.amount
-              //  const isCritical = data.isCritical
-              //  shadowchainsForAllPlayers(amount, isCritical)
+
+                //  const amount = data.amount
+                //  const isCritical = data.isCritical
+                //  shadowchainsForAllPlayers(amount, isCritical)
                 break
             }
             // case "monsterPosSend":{
@@ -421,16 +457,15 @@ wss.on("connection", (ws) => {
             //         }
             //     });
             // } break
-         
         }
     })
 
-
     ws.on("close", (code, reason) => {
-        clearInterval(pingInterval);
+        clearInterval(pingInterval)
         console.log(
             `Connection closed by ${ws.playerId}. Code: ${code}, Reason: ${reason}`
         )
+      
     })
 
     ws.onerror = (error) => {
@@ -438,22 +473,22 @@ wss.on("connection", (ws) => {
     }
 })
 
-  
+
 
 function broadcastToRoom(realmName, roomId, roomMsg){
     const realmToBroadcast = realms[realmName]
-    if(!realmToBroadcast){
-        console.log(`Realm ${realmName} does not exist.`);
-        return;
+    if (!realmToBroadcast) {
+        console.log(`Realm ${realmName} does not exist.`)
+        return
     }
     const room = realmToBroadcast[roomId]
-    if(!room){
-        console.log(`Room ${roomId} in realm ${realmName} does not exist.`);
-        return;
+    if (!room) {
+        console.log(`Room ${roomId} in realm ${realmName} does not exist.`)
+        return
     }
-    room.forEach(client =>{
+    room.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(roomMsg));
+            client.send(JSON.stringify(roomMsg))
         }
         console.log("sent broadcastToRoom message")
     })
@@ -475,7 +510,5 @@ function broadcastToRoom(realmName, roomId, roomMsg){
 //         }
 //     })
 // }
-
-
 
 console.log("Connected to Dice Master WebSocket Server Heroku App")
