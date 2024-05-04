@@ -44,7 +44,7 @@ wss.on("connection", (ws) => {
                     let lastRoomName = lastRoomIndex > 0 ? 'bossRoom' + lastRoomIndex : 'bossRoom'; // Determine the last room's name
                     let lastRoom = realms[realm][lastRoomName]; // Get the last room
                 
-                    if (!lastRoom || lastRoom.length >= 1) { 
+                    if (!lastRoom || lastRoom.length >= 2) { 
                         const newRoomIndex = lastRoomIndex + 1;
                         roomId = 'bossRoom' + newRoomIndex;
                         realms[realm][roomId] = [];
