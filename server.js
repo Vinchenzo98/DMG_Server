@@ -15,7 +15,7 @@ const users = {}
 wss.on("connection", (ws) => {
     const playerId = generatePlayerId()
     ws.playerId = playerId
-    
+
     const pingInterval = setInterval(() => {
         ws.ping()
         console.log("Pinged Server")
@@ -26,11 +26,10 @@ wss.on("connection", (ws) => {
         const data = JSON.parse(message)
 
         switch (data.type) {
-         
+
             case 'initRoom': {
                 const {userId, realm, playerName} = data;
-            
-                // Ensure the realm exists
+
                 if (!realms[realm]) {
                     realms[realm] = {};
                 }
@@ -40,28 +39,28 @@ wss.on("connection", (ws) => {
                     console.log(`Refreshing connection for existing user ${userId}`);
                     users[userId].ws = ws;
                 } else{
-                    let roomName = 'bossRoom'; 
+                    let roomId = 'bossRoom'; 
                     let lastRoomIndex = Object.keys(realms[realm]).length; // Get the last room index
                     let lastRoomName = lastRoomIndex > 0 ? 'bossRoom' + lastRoomIndex : 'bossRoom'; // Determine the last room's name
                     let lastRoom = realms[realm][lastRoomName]; // Get the last room
                 
                     if (!lastRoom || lastRoom.length >= 1) { 
                         const newRoomIndex = lastRoomIndex + 1;
-                        roomName = 'bossRoom' + newRoomIndex;
-                        realms[realm][roomName] = [];
+                        roomId = 'bossRoom' + newRoomIndex;
+                        realms[realm][roomId] = [];
                     } else {
-                        roomName = lastRoomName;
+                        roomId = lastRoomName;
                     }
                 
-                    realms[realm][roomName].push(ws);
-                    users[userId] = { ws, realm, roomId: roomName}; 
-                    console.log(`User ${userId} added to room '${roomName}' in realm ${realm}`);
-                    broadcastToRoom(realm, roomName, { type: "playerJoinedToClient", userId: userId, roomId: roomName, playerName: playerName });
+                    realms[realm][roomId].push(ws);
+                    ws.userId = userId;
+                    console.log(`ws userId connection value ${ws.userId}`)
+                    users[userId] = { ws, realm, roomId, playerName}; 
+                    console.log(`User ${userId} added to room '${roomId}' in realm ${realm}`);
+                    broadcastToRoom(realm, roomId, { type: "playerJoinedToClient", userId: userId, roomId: roomId, playerName: playerName });
                 }
 
             } break;
-            
-         
             case 'playerLeave': {
                 const user = users[data.userId];
                 const playerName = data.playerName;
@@ -106,7 +105,31 @@ wss.on("connection", (ws) => {
                 }
                
             } break;
-            
+ 
+            // case 'getPlayersForRoom':{
+            //     const user = users[data.userId];
+            //     const playerName = data.playerName;
+            //     if (user) {
+            //         const { realm, roomId } = user;
+            //         const room = realms[realm][roomId];
+            //         if (room) {
+            //             const players = room.map(user => ({
+            //                 user,
+            //                 playerName
+            //             }));
+
+            //             room.forEach(userId => {
+            //                 const clientWs = users[data.userId].ws;
+            //                 if (clientWs.readyState === WebSocket.OPEN) {
+            //                     clientWs.send(JSON.stringify({
+            //                         type: "returnPlayersInRoom",
+            //                         players
+            //                     }));
+            //                 }
+            //             });
+            //         }
+            //     }
+            //  } break;
             case "sendPlayerHitMonster":
                 // playerHitMonster()
                 {
@@ -322,6 +345,28 @@ wss.on("connection", (ws) => {
                 break
             }
 
+            case "blockSkills": {
+                const { userId, amount, isCritical } = data
+                const user = users[userId]
+                if (!user) {
+                    console.log(`User ${userId} not found.`)
+                    return
+                }
+                const { realm, roomId } = user
+
+                const attackMessage = {
+                    type: "blockSkills",
+                    amount: amount,
+                    isCritical: isCritical,
+                }
+                broadcastToRoom(realm, roomId, attackMessage)
+
+                //const amount = data.amount
+                //const isCritical = data.isCritical
+                //increaseAttackForAllPlayers(amount, isCritical)
+                break
+            }
+
             // Handle increaseMagic case
             case "increaseMagic": {
                 const { userId, amount, isCritical } = data
@@ -462,10 +507,17 @@ wss.on("connection", (ws) => {
 
     ws.on("close", (code, reason) => {
         clearInterval(pingInterval)
+        if(ws.userId){
+            console.log(`inside leave with value:  ${ws.userId}`)
+            handlePlayerLeave({ userId: ws.userId });
+        }
+        else {
+            console.log("ws.userId not found on WebSocket object at close.");
+        }
         console.log(
             `Connection closed by ${ws.playerId}. Code: ${code}, Reason: ${reason}`
         )
-      
+        
     })
 
     ws.onerror = (error) => {
@@ -473,17 +525,69 @@ wss.on("connection", (ws) => {
     }
 })
 
+function handlePlayerLeave(data) {
+    const { userId } = data;
+    console.log("Attempting to handle player leave for userId:", userId);
+
+    const user = users[userId];
+    if (!user) {
+        console.log(`No user found for userId: ${userId}`);
+        return;
+    }
+
+    console.log(`Found user, preparing to remove from room. Details:`, user);
+
+    const { ws, realm, roomId, playerName } = user;
+    if (!realms[realm]) {
+        console.log(`Realm not found: ${realm}`);
+        return;
+    }
+
+    const room = realms[realm][roomId];
+    if (!room) {
+        console.log(`Room not found: ${roomId} in realm: ${realm}`);
+        return;
+    }
+
+    const index = room.indexOf(ws);
+    if (index !== -1) {
+        room.splice(index, 1);
+        console.log(`Removed user from room. Room now has ${room.length} connections.`);
+    } else {
+        console.log("WebSocket not found in room on disconnect.");
+    }
+
+    // if (room.length === 0) {
+    //     delete realms[realm][roomId];
+    //     console.log(`Deleted room: ${roomId} as it's now empty.`);
+    // }
+
+    delete users[userId];
+    console.log(`Deleted user: ${userId} from global users list.`);
+
+    broadcastToRoom(
+        realm, 
+        roomId, 
+        {
+            type: "playerLeftToClient", 
+            userId: userId, 
+            roomId: roomId, 
+            playerName: playerName
+        })
+}
 
 
-function broadcastToRoom(realmName, roomId, roomMsg){
-    const realmToBroadcast = realms[realmName]
+
+
+function broadcastToRoom(realm, roomId, roomMsg){
+    const realmToBroadcast = realms[realm]
     if (!realmToBroadcast) {
-        console.log(`Realm ${realmName} does not exist.`)
+        console.log(`Realm ${realm} does not exist.`)
         return
     }
     const room = realmToBroadcast[roomId]
     if (!room) {
-        console.log(`Room ${roomId} in realm ${realmName} does not exist.`)
+        console.log(`Room ${roomId} in realm ${realm} does not exist.`)
         return
     }
     room.forEach((client) => {
@@ -493,6 +597,7 @@ function broadcastToRoom(realmName, roomId, roomMsg){
         console.log("sent broadcastToRoom message")
     })
 }
+
 
 // function monsterAttackTimer() {
 //     wss.clients.forEach(function each(client) {
