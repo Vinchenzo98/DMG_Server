@@ -64,6 +64,7 @@ wss.on("connection", (ws) => {
             case 'playerLeave': {
                 const user = users[data.userId];
                 const playerName = data.playerName;
+                const userId = data.userId;
                 console.log("playerLeave server recieve msg")
                 if (user) {
                     const { ws, realm, roomId } = user;
@@ -87,7 +88,7 @@ wss.on("connection", (ws) => {
                                     console.log("open websocket")
                                     remainingWs.send(JSON.stringify({
                                         type: "playerLeftToClient",
-                                        userId: data.userId,
+                                        userId: userId,
                                         roomId: roomId,
                                         playerName: playerName
                                     }));
@@ -106,30 +107,46 @@ wss.on("connection", (ws) => {
                
             } break;
  
-            // case 'getPlayersForRoom':{
-            //     const user = users[data.userId];
-            //     const playerName = data.playerName;
-            //     if (user) {
-            //         const { realm, roomId } = user;
-            //         const room = realms[realm][roomId];
-            //         if (room) {
-            //             const players = room.map(user => ({
-            //                 user,
-            //                 playerName
-            //             }));
-
-            //             room.forEach(userId => {
-            //                 const clientWs = users[data.userId].ws;
-            //                 if (clientWs.readyState === WebSocket.OPEN) {
-            //                     clientWs.send(JSON.stringify({
-            //                         type: "returnPlayersInRoom",
-            //                         players
-            //                     }));
-            //                 }
-            //             });
-            //         }
-            //     }
-            //  } break;
+            case 'getPlayersForRoom': {
+                const user = users[data.userId];
+                console.log("Inside getPlayersForRoom");
+                
+                if (user) {
+                    const { realm, roomId } = user;
+                    const room = realms[realm][roomId];
+                    
+                    if (room && room.length > 0) {
+                        const players = room.map(ws => {
+                            // Extract the userId associated with each websocket
+                            const foundUserId = Object.keys(users).find(id => users[id].ws === ws);
+                            return {
+                                userId: foundUserId,
+                                playerName: users[foundUserId].playerName  // Access the playerName using userId
+                            };
+                        });
+            
+                        console.log("Players in room:", players);
+                        room.forEach(client => {
+                            if (client.readyState === WebSocket.OPEN) {
+                                client.send(JSON.stringify({
+                                    type: "returnPlayersInRoom",
+                                    players: players
+                                }));
+                                console.log("Sent players list to client.");
+                            } else {
+                                console.log(`WebSocket not open. State: ${client.readyState}`);
+                            }
+                        });
+                    } else {
+                        console.log("No such room or room is empty.");
+                    }
+                } else {
+                    console.log("User not found or disconnected.");
+                }
+                break;
+            }
+  
+            
             case "sendPlayerHitMonster":
                 // playerHitMonster()
                 {
