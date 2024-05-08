@@ -28,7 +28,7 @@ wss.on("connection", (ws) => {
         switch (data.type) {
 
             case 'initRoom': {
-                const {userId, realm, playerName} = data;
+                const {userId, realm, playerName, playerClass, playerLevel} = data;
 
                 if (!realms[realm]) {
                     realms[realm] = {};
@@ -55,7 +55,7 @@ wss.on("connection", (ws) => {
                     realms[realm][roomId].push(ws);
                     ws.userId = userId;
                     console.log(`ws userId connection value ${ws.userId}`)
-                    users[userId] = { ws, realm, roomId, playerName}; 
+                    users[userId] = { ws, realm, roomId, playerName, playerClass, playerLevel}; 
                     console.log(`User ${userId} added to room '${roomId}' in realm ${realm}`);
                     broadcastToRoom(realm, roomId, { type: "playerJoinedToClient", userId: userId, roomId: roomId, playerName: playerName });
                 }
@@ -110,7 +110,7 @@ wss.on("connection", (ws) => {
             case 'getPlayersForRoom': {
                 const user = users[data.userId];
                 console.log("Inside getPlayersForRoom");
-                
+               
                 if (user) {
                     const { realm, roomId } = user;
                     const room = realms[realm][roomId];
@@ -121,7 +121,9 @@ wss.on("connection", (ws) => {
                             const foundUserId = Object.keys(users).find(id => users[id].ws === ws);
                             return {
                                 userId: foundUserId,
-                                playerName: users[foundUserId].playerName  // Access the playerName using userId
+                                playerName: users[foundUserId].playerName,
+                                playerClass: users[foundUserId].playerClass,
+                                playerLevel: users[foundUserId].playerLevel
                             };
                         });
             
@@ -591,6 +593,8 @@ function handlePlayerLeave(data) {
             roomId: roomId, 
             playerName: playerName
         })
+
+    
 }
 
 
