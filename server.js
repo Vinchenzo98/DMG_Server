@@ -26,129 +26,183 @@ wss.on("connection", (ws) => {
         const data = JSON.parse(message)
 
         switch (data.type) {
+            case "initRoom":
+                {
+                    const {
+                        userId,
+                        realm,
+                        playerName,
+                        playerClass,
+                        playerLevel,
+                        playerHp,
+                    } = data
 
-            case 'initRoom': {
-                const {userId, realm, playerName, playerClass, playerLevel} = data;
+                    if (!realms[realm]) {
+                        realms[realm] = {}
+                    }
 
-                if (!realms[realm]) {
-                    realms[realm] = {};
-                }
-
-                //Check for duplicate user
-                if(users[userId]){
-                    console.log(`Refreshing connection for existing user ${userId}`);
-                    users[userId].ws = ws;
-                } else{
-                    let roomId = 'bossRoom'; 
-                    let lastRoomIndex = Object.keys(realms[realm]).length; // Get the last room index
-                    let lastRoomName = lastRoomIndex > 0 ? 'bossRoom' + lastRoomIndex : 'bossRoom'; // Determine the last room's name
-                    let lastRoom = realms[realm][lastRoomName]; // Get the last room
-                
-                    if (!lastRoom || lastRoom.length >= 2) { 
-                        const newRoomIndex = lastRoomIndex + 1;
-                        roomId = 'bossRoom' + newRoomIndex;
-                        realms[realm][roomId] = [];
+                    //Check for duplicate user
+                    if (users[userId]) {
+                        console.log(
+                            `Refreshing connection for existing user ${userId}`
+                        )
+                        users[userId].ws = ws
                     } else {
-                        roomId = lastRoomName;
-                    }
-                
-                    realms[realm][roomId].push(ws);
-                    ws.userId = userId;
-                    console.log(`ws userId connection value ${ws.userId}`)
-                    users[userId] = { ws, realm, roomId, playerName, playerClass, playerLevel}; 
-                    console.log(`User ${userId} added to room '${roomId}' in realm ${realm}`);
-                    broadcastToRoom(realm, roomId, { type: "playerJoinedToClient", userId: userId, roomId: roomId, playerName: playerName });
-                }
+                        let roomId = "bossRoom"
+                        let lastRoomIndex = Object.keys(realms[realm]).length // Get the last room index
+                        let lastRoomName =
+                            lastRoomIndex > 0
+                                ? "bossRoom" + lastRoomIndex
+                                : "bossRoom" // Determine the last room's name
+                        let lastRoom = realms[realm][lastRoomName] // Get the last room
 
-            } break;
-            case 'playerLeave': {
-                const user = users[data.userId];
-                const playerName = data.playerName;
-                const userId = data.userId;
-                console.log("playerLeave server recieve msg")
-                if (user) {
-                    const { ws, realm, roomId } = user;
-                    console.log("Entered user if statement")
-                    const room = realms[realm][roomId];
-                    if (room) {
-                        console.log("Entered room if statement")
-                        const wsIndex = room.indexOf(ws);
-                        if (wsIndex > -1) {
-                            room.splice(wsIndex, 1);
-                            console.log(`User ${data.userId} left room '${roomId}' in realm ${realm}.`);
-                            if(room.length === 0){
-                                delete realms[realm][roomId];
-                                console.log(`Room ${roomId} was deleted from ${realm}`)
-                            }
-                            room.forEach((remainingWs, index) => {
-                                console.log(`Remaining connections in room '${roomId}':`);
-                                const remainingUserId = Object.keys(users).find(userId => users[userId].ws === remainingWs);
-                                console.log(`Index: ${index}, UserID: ${remainingUserId}`);
-                                if (remainingWs.readyState === WebSocket.OPEN) {
-                                    console.log("open websocket")
-                                    remainingWs.send(JSON.stringify({
-                                        type: "playerLeftToClient",
-                                        userId: userId,
-                                        roomId: roomId,
-                                        playerName: playerName
-                                    }));
-                                    
-                                }else{
-                                    console.log("WebSocket is not open. Message not sent.");
-                                }
-                            });
-                       
+                        if (!lastRoom || lastRoom.length >= 2) {
+                            const newRoomIndex = lastRoomIndex + 1
+                            roomId = "bossRoom" + newRoomIndex
+                            realms[realm][roomId] = []
+                        } else {
+                            roomId = lastRoomName
                         }
+
+                        realms[realm][roomId].push(ws)
+                        ws.userId = userId
+                        console.log(`ws userId connection value ${ws.userId}`)
+                        users[userId] = {
+                            ws,
+                            realm,
+                            roomId,
+                            playerName,
+                            playerClass,
+                            playerLevel,
+                            playerHp,
+                        }
+                        console.log(
+                            `User ${userId} added to room '${roomId}' in realm ${realm}`
+                        )
+                        broadcastToRoom(realm, roomId, {
+                            type: "playerJoinedToClient",
+                            userId: userId,
+                            roomId: roomId,
+                            playerName: playerName,
+                            playerHp: playerHp
+                        })
                     }
-                    delete users[data.userId];
-                    console.log(`User ${data.userId} deleted from users object.`);
-                
                 }
-               
-            } break;
- 
-            case 'getPlayersForRoom': {
-                const user = users[data.userId];
-                console.log("Inside getPlayersForRoom");
-               
+                break
+            case "playerLeave":
+                {
+                    const user = users[data.userId]
+                    const playerName = data.playerName
+                    const userId = data.userId
+                    console.log("playerLeave server recieve msg")
+                    if (user) {
+                        const { ws, realm, roomId } = user
+                        console.log("Entered user if statement")
+                        const room = realms[realm][roomId]
+                        if (room) {
+                            console.log("Entered room if statement")
+                            const wsIndex = room.indexOf(ws)
+                            if (wsIndex > -1) {
+                                room.splice(wsIndex, 1)
+                                console.log(
+                                    `User ${data.userId} left room '${roomId}' in realm ${realm}.`
+                                )
+                                if (room.length === 0) {
+                                    delete realms[realm][roomId]
+                                    console.log(
+                                        `Room ${roomId} was deleted from ${realm}`
+                                    )
+                                }
+                                room.forEach((remainingWs, index) => {
+                                    console.log(
+                                        `Remaining connections in room '${roomId}':`
+                                    )
+                                    const remainingUserId = Object.keys(
+                                        users
+                                    ).find(
+                                        (userId) =>
+                                            users[userId].ws === remainingWs
+                                    )
+                                    console.log(
+                                        `Index: ${index}, UserID: ${remainingUserId}`
+                                    )
+                                    if (
+                                        remainingWs.readyState ===
+                                        WebSocket.OPEN
+                                    ) {
+                                        console.log("open websocket")
+                                        remainingWs.send(
+                                            JSON.stringify({
+                                                type: "playerLeftToClient",
+                                                userId: userId,
+                                                roomId: roomId,
+                                                playerName: playerName,
+                                            })
+                                        )
+                                    } else {
+                                        console.log(
+                                            "WebSocket is not open. Message not sent."
+                                        )
+                                    }
+                                })
+                            }
+                        }
+                        delete users[data.userId]
+                        console.log(
+                            `User ${data.userId} deleted from users object.`
+                        )
+                    }
+                }
+                break
+
+            case "getPlayersForRoom": {
+                const user = users[data.userId]
+                console.log("Inside getPlayersForRoom")
+
                 if (user) {
-                    const { realm, roomId } = user;
-                    const room = realms[realm][roomId];
-                    
+                    const { realm, roomId } = user
+                    const room = realms[realm][roomId]
+
                     if (room && room.length > 0) {
-                        const players = room.map(ws => {
+                        const players = room.map((ws) => {
                             // Extract the userId associated with each websocket
-                            const foundUserId = Object.keys(users).find(id => users[id].ws === ws);
+                            const foundUserId = Object.keys(users).find(
+                                (id) => users[id].ws === ws
+                            )
                             return {
                                 userId: foundUserId,
                                 playerName: users[foundUserId].playerName,
                                 playerClass: users[foundUserId].playerClass,
-                                playerLevel: users[foundUserId].playerLevel
-                            };
-                        });
-            
-                        console.log("Players in room:", players);
-                        room.forEach(client => {
-                            if (client.readyState === WebSocket.OPEN) {
-                                client.send(JSON.stringify({
-                                    type: "returnPlayersInRoom",
-                                    players: players
-                                }));
-                                console.log("Sent players list to client.");
-                            } else {
-                                console.log(`WebSocket not open. State: ${client.readyState}`);
+                                playerLevel: users[foundUserId].playerLevel,
+                                playerHp: users[foundUserId].playerHp,
                             }
-                        });
+                        })
+
+                        console.log("Players in room:", players)
+                        room.forEach((client) => {
+                            if (client.readyState === WebSocket.OPEN) {
+                                client.send(
+                                    JSON.stringify({
+                                        type: "returnPlayersInRoom",
+                                        players: players,
+                                    })
+                                )
+                                console.log("Sent players list to client.")
+                            } else {
+                                console.log(
+                                    `WebSocket not open. State: ${client.readyState}`
+                                )
+                            }
+                        })
                     } else {
-                        console.log("No such room or room is empty.");
+                        console.log("No such room or room is empty.")
                     }
                 } else {
-                    console.log("User not found or disconnected.");
+                    console.log("User not found or disconnected.")
                 }
-                break;
+                break
             }
-  
-            
+
             case "sendPlayerHitMonster":
                 // playerHitMonster()
                 {
@@ -526,17 +580,15 @@ wss.on("connection", (ws) => {
 
     ws.on("close", (code, reason) => {
         clearInterval(pingInterval)
-        if(ws.userId){
+        if (ws.userId) {
             console.log(`inside leave with value:  ${ws.userId}`)
-            handlePlayerLeave({ userId: ws.userId });
-        }
-        else {
-            console.log("ws.userId not found on WebSocket object at close.");
+            handlePlayerLeave({ userId: ws.userId })
+        } else {
+            console.log("ws.userId not found on WebSocket object at close.")
         }
         console.log(
             `Connection closed by ${ws.playerId}. Code: ${code}, Reason: ${reason}`
         )
-        
     })
 
     ws.onerror = (error) => {
@@ -545,35 +597,37 @@ wss.on("connection", (ws) => {
 })
 
 function handlePlayerLeave(data) {
-    const { userId } = data;
-    console.log("Attempting to handle player leave for userId:", userId);
+    const { userId } = data
+    console.log("Attempting to handle player leave for userId:", userId)
 
-    const user = users[userId];
+    const user = users[userId]
     if (!user) {
-        console.log(`No user found for userId: ${userId}`);
-        return;
+        console.log(`No user found for userId: ${userId}`)
+        return
     }
 
-    console.log(`Found user, preparing to remove from room. Details:`, user);
+    console.log(`Found user, preparing to remove from room. Details:`, user)
 
-    const { ws, realm, roomId, playerName } = user;
+    const { ws, realm, roomId, playerName } = user
     if (!realms[realm]) {
-        console.log(`Realm not found: ${realm}`);
-        return;
+        console.log(`Realm not found: ${realm}`)
+        return
     }
 
-    const room = realms[realm][roomId];
+    const room = realms[realm][roomId]
     if (!room) {
-        console.log(`Room not found: ${roomId} in realm: ${realm}`);
-        return;
+        console.log(`Room not found: ${roomId} in realm: ${realm}`)
+        return
     }
 
-    const index = room.indexOf(ws);
+    const index = room.indexOf(ws)
     if (index !== -1) {
-        room.splice(index, 1);
-        console.log(`Removed user from room. Room now has ${room.length} connections.`);
+        room.splice(index, 1)
+        console.log(
+            `Removed user from room. Room now has ${room.length} connections.`
+        )
     } else {
-        console.log("WebSocket not found in room on disconnect.");
+        console.log("WebSocket not found in room on disconnect.")
     }
 
     // if (room.length === 0) {
@@ -581,26 +635,18 @@ function handlePlayerLeave(data) {
     //     console.log(`Deleted room: ${roomId} as it's now empty.`);
     // }
 
-    delete users[userId];
-    console.log(`Deleted user: ${userId} from global users list.`);
+    delete users[userId]
+    console.log(`Deleted user: ${userId} from global users list.`)
 
-    broadcastToRoom(
-        realm, 
-        roomId, 
-        {
-            type: "playerLeftToClient", 
-            userId: userId, 
-            roomId: roomId, 
-            playerName: playerName
-        })
-
-    
+    broadcastToRoom(realm, roomId, {
+        type: "playerLeftToClient",
+        userId: userId,
+        roomId: roomId,
+        playerName: playerName,
+    })
 }
 
-
-
-
-function broadcastToRoom(realm, roomId, roomMsg){
+function broadcastToRoom(realm, roomId, roomMsg) {
     const realmToBroadcast = realms[realm]
     if (!realmToBroadcast) {
         console.log(`Realm ${realm} does not exist.`)
@@ -618,7 +664,6 @@ function broadcastToRoom(realm, roomId, roomMsg){
         console.log("sent broadcastToRoom message")
     })
 }
-
 
 // function monsterAttackTimer() {
 //     wss.clients.forEach(function each(client) {
