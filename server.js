@@ -35,6 +35,7 @@ wss.on("connection", (ws) => {
                         playerClass,
                         playerLevel,
                         playerHp,
+                        playerEther,
                     } = data
 
                     if (!realms[realm]) {
@@ -75,6 +76,7 @@ wss.on("connection", (ws) => {
                             playerClass,
                             playerLevel,
                             playerHp,
+                            playerEther,
                         }
                         console.log(
                             `User ${userId} added to room '${roomId}' in realm ${realm}`
@@ -84,7 +86,8 @@ wss.on("connection", (ws) => {
                             userId: userId,
                             roomId: roomId,
                             playerName: playerName,
-                            playerHp: playerHp
+                            playerHp: playerHp,
+                            playerEther: playerEther,
                         })
                     }
                 }
@@ -158,10 +161,11 @@ wss.on("connection", (ws) => {
             case "getPlayersForRoom": {
                 const user = users[data.userId]
                 console.log("Inside getPlayersForRoom")
-
+        
                 if (user) {
                     const { realm, roomId } = user
                     const room = realms[realm][roomId]
+                    users[data.userId]
 
                     if (room && room.length > 0) {
                         const players = room.map((ws) => {
@@ -169,12 +173,24 @@ wss.on("connection", (ws) => {
                             const foundUserId = Object.keys(users).find(
                                 (id) => users[id].ws === ws
                             )
-                            return {
-                                userId: foundUserId,
-                                playerName: users[foundUserId].playerName,
-                                playerClass: users[foundUserId].playerClass,
-                                playerLevel: users[foundUserId].playerLevel,
-                                playerHp: users[foundUserId].playerHp,
+                            if (foundUserId && users[foundUserId].playerHp) {
+                                console.log(`player found HP: ${users[foundUserId].playerHp} updating to... ${data.playerHp}`)
+
+                              
+                                users[foundUserId].playerHp = foundUserId === data.userId ? data.playerHp : users[foundUserId].playerHp;
+                                console.log(`player HP updated: ${users[foundUserId].playerHp}`)
+                                return {
+                                    userId: foundUserId,
+                                    playerName: users[foundUserId].playerName,
+                                    playerClass: users[foundUserId].playerClass,
+                                    playerLevel: users[foundUserId].playerLevel,
+                                    playerHp: users[foundUserId].playerHp,
+                                    playerEther: users[foundUserId].playerEther
+                                };
+                            } else {
+                                return null; 
+
+                              
                             }
                         })
 
@@ -202,6 +218,34 @@ wss.on("connection", (ws) => {
                 }
                 break
             }
+            
+            case "decreasePlayerHealth":
+                {
+                    const { 
+                        userId,
+                        playerName,
+                        playerHp
+                    } = data
+                    const user = users[userId]
+                
+                  console.log(`player data: ${playerName}, HP: ${playerHp}, ID: ${userId}`)
+
+                    if (!user) {
+                        console.log(`User ${userId} not found.`)
+                        return
+                    }
+                    const { realm, roomId } = user
+
+                    broadcastToRoom(realm, roomId, {
+                        type: "decreasePlayerHp",
+                        userId: userId,
+                        roomId: roomId,
+                        realm: realm,
+                        playerName: playerName,
+                        playerHp: playerHp
+                    })
+                }
+                break
 
             case "sendPlayerHitMonster":
                 // playerHitMonster()
