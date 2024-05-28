@@ -166,19 +166,21 @@ wss.on("connection", (ws) => {
                     const { realm, roomId } = user
                     const room = realms[realm][roomId]
                     users[data.userId]
-
+                    console.log(`user statment true: ${data.userId} + roomId: ${roomId}`)
                     if (room && room.length > 0) {
+                        console.log(`room found: ${roomId}`)
                         const players = room.map((ws) => {
-                            // Extract the userId associated with each websocket
+                            console.log(`Entered players`)
                             const foundUserId = Object.keys(users).find(
                                 (id) => users[id].ws === ws
                             )
-                            if (foundUserId && users[foundUserId].playerHp) {
+                            console.log(`foundUserId: ${foundUserId} and HP: ${users[foundUserId].playerHp}`)
+                            if ((foundUserId && users[foundUserId].playerHp) || (users[foundUserId].playerHp == 0)) {
                                 console.log(`player found HP: ${users[foundUserId].playerHp} updating to... ${data.playerHp}`)
 
-                              
-                                users[foundUserId].playerHp = foundUserId === data.userId ? data.playerHp : users[foundUserId].playerHp;
+                                users[foundUserId].playerHp = foundUserId === data.userId ? Math.floor(data.playerHp) : users[foundUserId].playerHp;
                                 console.log(`player HP updated: ${users[foundUserId].playerHp}`)
+
                                 return {
                                     userId: foundUserId,
                                     playerName: users[foundUserId].playerName,
@@ -187,10 +189,6 @@ wss.on("connection", (ws) => {
                                     playerHp: users[foundUserId].playerHp,
                                     playerEther: users[foundUserId].playerEther
                                 };
-                            } else {
-                                return null; 
-
-                              
                             }
                         })
 
@@ -219,7 +217,7 @@ wss.on("connection", (ws) => {
                 break
             }
             
-            case "decreasePlayerHealth":
+            case "changePlayerHealth":
                 {
                     const { 
                         userId,
@@ -237,7 +235,7 @@ wss.on("connection", (ws) => {
                     const { realm, roomId } = user
 
                     broadcastToRoom(realm, roomId, {
-                        type: "decreasePlayerHp",
+                        type: "changePlayerHp",
                         userId: userId,
                         roomId: roomId,
                         realm: realm,
@@ -705,7 +703,7 @@ function broadcastToRoom(realm, roomId, roomMsg) {
         if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify(roomMsg))
         }
-        console.log("sent broadcastToRoom message")
+        console.log(`sent broadcastToRoom message:`)
     })
 }
 
