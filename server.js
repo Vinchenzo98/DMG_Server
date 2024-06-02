@@ -177,10 +177,12 @@ wss.on("connection", (ws) => {
                             console.log(`foundUserId: ${foundUserId} and HP: ${users[foundUserId].playerHp}`)
                             if ((foundUserId && users[foundUserId].playerHp) || (users[foundUserId].playerHp == 0)) {
                                 console.log(`player found HP: ${users[foundUserId].playerHp} updating to... ${data.playerHp}`)
-
                                 users[foundUserId].playerHp = foundUserId === data.userId ? Math.floor(data.playerHp) : users[foundUserId].playerHp;
                                 console.log(`player HP updated: ${users[foundUserId].playerHp}`)
 
+                                console.log(`player Kills: ${users[foundUserId].playerEther} updating to... ${data.playerEther}`)
+                                users[foundUserId].playerEther = foundUserId === data.userId ? data.playerEther : users[foundUserId].playerEther;
+                                console.log(`player Kills updates: ${users[foundUserId].playerEther}`)
                                 return {
                                     userId: foundUserId,
                                     playerName: users[foundUserId].playerName,
@@ -217,16 +219,17 @@ wss.on("connection", (ws) => {
                 break
             }
             
-            case "changePlayerHealth":
+            case "changePlayerStats":
                 {
                     const { 
                         userId,
                         playerName,
-                        playerHp
+                        playerHp,
+                        playerEther
                     } = data
                     const user = users[userId]
                 
-                  console.log(`player data: ${playerName}, HP: ${playerHp}, ID: ${userId}`)
+                  console.log(`player data: ${playerName}, HP: ${playerHp}, ID: ${userId}, KILLS: ${playerEther}`)
 
                     if (!user) {
                         console.log(`User ${userId} not found.`)
@@ -235,16 +238,17 @@ wss.on("connection", (ws) => {
                     const { realm, roomId } = user
 
                     broadcastToRoom(realm, roomId, {
-                        type: "changePlayerHp",
+                        type: "changePlayerStatReceive",
                         userId: userId,
                         roomId: roomId,
                         realm: realm,
                         playerName: playerName,
-                        playerHp: playerHp
+                        playerHp: playerHp,
+                        playerEther: playerEther
                     })
                 }
                 break
-
+              
             case "sendPlayerHitMonster":
                 // playerHitMonster()
                 {
