@@ -218,7 +218,6 @@ wss.on("connection", (ws) => {
                 }
                 break
             }
-            
             case "changePlayerStats":
                 {
                     const { 
@@ -249,6 +248,25 @@ wss.on("connection", (ws) => {
                 }
                 break
               
+            case "broadcastPosition":{
+                const {userId, position} = data
+                const user = users[userId]
+
+                console.log(`Position found: ${position}`)
+                if (!user) {
+                    console.log(`User ${userId} not found.`)
+                    return
+                }
+                const { realm, roomId } = user
+
+                const playerHitMonsterMessage = {
+                    type: "receivePosition",
+                    userId: userId,
+                    position: position
+                }
+                broadcastToRoom(realm, roomId, playerHitMonsterMessage)
+            }break
+
             case "sendPlayerHitMonster":
                 // playerHitMonster()
                 {
