@@ -135,7 +135,7 @@ wss.on("connection", (ws) => {
                         }
                         users[userId].ws = ws; 
                     } else {
-                        if (roomToJoin.length >= 2) {
+                        if (roomToJoin.length >= 4) {
                             ws.send(JSON.stringify({ type: "roomFullOnJoin", message: "Room is full" }));
                             return; 
                         }
