@@ -36,38 +36,27 @@ wss.on("connection", (ws) => {
                         playerLevel,
                         playerHp,
                         playerEther,
-                    } = data
-
+                    } = data;
+            
+                    // Ensure the realm object exists
                     if (!realms[realm]) {
-                        realms[realm] = {}
+                        realms[realm] = {};
                     }
-
-                    //Check for duplicate user
+            
+                    // Check for duplicate user
                     if (users[userId]) {
-                        console.log(
-                            `Refreshing connection for existing user ${userId}`
-                        )
-                        users[userId].ws = ws
+                        console.log(`Refreshing connection for existing user ${userId}`);
+                        users[userId].ws = ws;
                     } else {
-                        let roomId = "bossRoom"
-                        let lastRoomIndex = Object.keys(realms[realm]).length // Get the last room index
-                        let lastRoomName =
-                            lastRoomIndex > 0
-                                ? "bossRoom" + lastRoomIndex
-                                : "bossRoom" // Determine the last room's name
-                        let lastRoom = realms[realm][lastRoomName] // Get the last room
-
-                        if (!lastRoom || lastRoom.length >= 2) {
-                            const newRoomIndex = lastRoomIndex + 1
-                            roomId = "bossRoom" + newRoomIndex
-                            realms[realm][roomId] = []
-                        } else {
-                            roomId = lastRoomName
-                        }
-
-                        realms[realm][roomId].push(ws)
-                        ws.userId = userId
-                        console.log(`ws userId connection value ${ws.userId}`)
+                        // Generate a new room ID by counting existing rooms and adding 1
+                        let lastRoomIndex = Object.keys(realms[realm]).length;
+                        let roomId = "bossRoom" + (lastRoomIndex + 1);  // Always create a new room
+            
+                        // Initialize the new room
+                        realms[realm][roomId] = [ws]; // Add the user's WebSocket to the new room
+            
+                        // Store user details
+                        ws.userId = userId;  // Optionally store userId on ws for easier reference
                         users[userId] = {
                             ws,
                             realm,
@@ -77,21 +66,98 @@ wss.on("connection", (ws) => {
                             playerLevel,
                             playerHp,
                             playerEther,
-                        }
-                        console.log(
-                            `User ${userId} added to room '${roomId}' in realm ${realm}`
-                        )
+                        };
+            
+                        console.log(`User ${userId} added to new room '${roomId}' in realm ${realm}`);
+            
+                        let playerCount = realms[realm][roomId]
+                        // Broadcast the creation of a new room to the room itself (which currently has only one member)
                         broadcastToRoom(realm, roomId, {
-                            type: "playerJoinedToClient",
+                            type: "playerCreateRoom",
                             userId: userId,
                             roomId: roomId,
+                            realm: realm,
                             playerName: playerName,
                             playerHp: playerHp,
                             playerEther: playerEther,
-                        })
+                            playerCount: playerCount.length
+                        });
+
+
                     }
                 }
-                break
+                break;
+                case "sendRoomName":{
+                    const {
+                        roomId
+                    } = data;
+
+                    console.log(`Sent RoomId: ${roomId}`)
+                    const roomMessage = {
+                        type: "returnRoomName",
+                        roomId: roomId
+                    }
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify(roomMessage))
+                    }
+                }break;
+                case "joinRoom": {
+                    const {
+                        userId,
+                        realm,
+                        playerName,
+                        playerClass,
+                        playerLevel,
+                        playerHp,
+                        playerEther,
+                        roomName
+                    } = data;
+                
+                    if (!realms[realm]) {
+                        realms[realm] = {};
+                    }
+                
+                    if (!realms[realm][roomName]) {
+                        realms[realm][roomName] = []; // Initialize the room if it does not exist
+                    }
+                
+                    let roomToJoin = realms[realm][roomName];
+                
+                    if (users[userId]) {
+                        console.log(`Refreshing connection for existing user ${userId}`);
+                        if (users[userId].roomId && realms[realm][users[userId].roomId]) {
+                            console.log(`Checking if ${userId} is in ${roomName}`)
+                            const prevRoom = realms[realm][users[userId].roomId];
+                            const index = prevRoom.indexOf(users[userId].ws);
+                            if (index > -1) {
+                                prevRoom.splice(index, 1); 
+                            }
+                        }
+                        users[userId].ws = ws; 
+                    } else {
+                        if (roomToJoin.length >= 2) {
+                            ws.send(JSON.stringify({ type: "roomFullOnJoin", message: "Room is full" }));
+                            return; 
+                        }
+                        users[userId] = { ws, realm, roomName, playerName, playerClass, playerLevel, playerHp, playerEther };
+                        console.log(`User ${userId} added to room '${roomName}' in realm ${realm}`);
+                    }
+                
+
+                    roomToJoin.push(ws);
+                    let playerCount = roomToJoin.length;
+                    console.log(`playerCount in ${roomName} is ${playerCount}`)
+                    broadcastToRoom(realm, roomName, {
+                        type: "playerJoinedRoom",
+                        userId,
+                        roomName,
+                        playerName,
+                        playerHp,
+                        playerEther,
+                        playerCount
+                    });
+                } break;
+            
             case "playerLeave":
                 {
                     const user = users[data.userId]
@@ -158,6 +224,45 @@ wss.on("connection", (ws) => {
                 }
                 break
 
+                case "getRoomsInRealm": {
+                    const { 
+                        playerName,
+                        realm
+                     } = data;  
+                
+                    const currentRealm = realms[realm];
+                    console.log(`Checking rooms in realm: ${realm}`);
+                
+                    if (currentRealm && Object.keys(currentRealm).length > 0) {
+                        console.log(`Checking player name: ${playerName}`)
+                        const rooms = Object.keys(currentRealm).map(roomId => {
+                            let playersInRoom = realms[realm][roomId]
+                            let playerCount = playersInRoom.length
+                            console.log(`Checking player count: ${playerCount}`)
+                            return { 
+                                roomId,
+                                playerName,
+                                playerCount
+                            };  
+                        });
+                
+                        console.log(`Rooms in ${realm}:`, rooms);
+                
+                        if (ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({
+                                type: "returnRoomsInRealm",
+                                rooms: rooms,
+                            }));
+                            console.log("Sent room list to client.");
+                        } else {
+                            console.log("WebSocket not open. State: ", ws.readyState);
+                        }
+                    } else {
+                        console.log("No rooms found in the specified realm or realm does not exist.");
+                    }
+                    break;
+                }
+                
             case "getPlayersForRoom": {
                 const user = users[data.userId]
                 console.log("Inside getPlayersForRoom")
@@ -204,6 +309,8 @@ wss.on("connection", (ws) => {
                                     })
                                 )
                                 console.log("Sent players list to client.")
+                                
+
                             } else {
                                 console.log(
                                     `WebSocket not open. State: ${client.readyState}`
@@ -675,10 +782,10 @@ function handlePlayerLeave(data) {
         console.log("WebSocket not found in room on disconnect.")
     }
 
-    // if (room.length === 0) {
-    //     delete realms[realm][roomId];
-    //     console.log(`Deleted room: ${roomId} as it's now empty.`);
-    // }
+    if (room.length === 0) {
+        delete realms[realm][roomId];
+        console.log(`Deleted room: ${roomId} as it's now empty.`);
+    }
 
     delete users[userId]
     console.log(`Deleted user: ${userId} from global users list.`)
@@ -709,6 +816,8 @@ function broadcastToRoom(realm, roomId, roomMsg) {
         console.log(`sent broadcastToRoom message:`)
     })
 }
+
+
 
 // function monsterAttackTimer() {
 //     wss.clients.forEach(function each(client) {
