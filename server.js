@@ -126,16 +126,19 @@ wss.on("connection", (ws) => {
                     if (users[userId]) {
                         console.log(`Refreshing connection for existing user ${userId}`);
                         if (users[userId].roomId && realms[realm][users[userId].roomId]) {
-                            console.log(`Checking if ${userId} is in ${roomName}`)
+                            console.log(`Checking if ${userId} is in ${users[userId].roomId}`)
                             const prevRoom = realms[realm][users[userId].roomId];
                             const index = prevRoom.indexOf(users[userId].ws);
                             if (index > -1) {
                                 prevRoom.splice(index, 1); 
+                                console.log(`${userId} removed from ${prevRoom} as ${index}`)
+                                realms[realm].splice(prevRoom, 1);
+                                console.log(`${prevRoom} deleted`)
                             }
                         }
                         users[userId].ws = ws; 
                     } else {
-                        if (roomToJoin.length >= 4) {
+                        if (roomToJoin.length >= 2) {
                             ws.send(JSON.stringify({ type: "roomFullOnJoin", message: "Room is full" }));
                             return; 
                         }
@@ -226,22 +229,22 @@ wss.on("connection", (ws) => {
 
                 case "getRoomsInRealm": {
                     const { 
-                        playerName,
                         realm
                      } = data;  
                 
-                    const currentRealm = realms[realm];
+                    const roomCount = realms[realm];
                     console.log(`Checking rooms in realm: ${realm}`);
                 
-                    if (currentRealm && Object.keys(currentRealm).length > 0) {
-                        console.log(`Checking player name: ${playerName}`)
-                        const rooms = Object.keys(currentRealm).map(roomId => {
+                    if (roomCount && Object.keys(roomCount).length > 0) {
+                        const rooms = Object.keys(roomCount).map(roomId => {
                             let playersInRoom = realms[realm][roomId]
+                            let roomCreator = playersInRoom.length > 0 ? users[Object.keys(users).find(userId => users[userId].ws === playersInRoom[0])].playerName : null;
+                            console.log(`Checking player name: ${roomCreator}`)
                             let playerCount = playersInRoom.length
                             console.log(`Checking player count: ${playerCount}`)
                             return { 
                                 roomId,
-                                playerName,
+                                roomCreator,
                                 playerCount
                             };  
                         });
