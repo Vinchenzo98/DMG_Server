@@ -458,6 +458,7 @@ wss.on("connection", (ws) => {
                 {
                     const { userId } = data
                     const random = Math.random() * 1000
+                    console.log(`Number generated: ${random}`)
                     const user = users[userId]
                     if (!user) {
                         console.log(`User ${userId} not found.`)
@@ -466,8 +467,8 @@ wss.on("connection", (ws) => {
                     const { realm, roomId } = user
 
                     const playerAttackSkillMessage = {
-                        type: "receivePlayerAttackGlobalSkill",
-                        random: random,
+                        type: "receiveGlobalSkillPlayerAttack",
+                        random: random
                     }
                     broadcastToRoom(realm, roomId, playerAttackSkillMessage)
                 }
@@ -478,6 +479,7 @@ wss.on("connection", (ws) => {
                 {
                     const { userId } = data
                     const random = Math.random() * 1000
+                    console.log(`Number generated: ${random}`)
                     const user = users[userId]
                     if (!user) {
                         console.log(`User ${userId} not found.`)
@@ -529,8 +531,9 @@ wss.on("connection", (ws) => {
                 break
             case "sendPlayerAttack":
                 {
-                    // playerAttackUpdate()
-                    const { userId, playerAttack } = data
+                   
+                    const { userId, playerAttack, isCriticalAttack, reduceHealthBy } = data
+                    console.log(`Sending player attack: ${playerAttack}`)
                     const user = users[userId]
                     if (!user) {
                         console.log(`User ${userId} not found.`)
@@ -542,31 +545,16 @@ wss.on("connection", (ws) => {
                         type: "recievePlayerAttack",
                         playerAttack: playerAttack,
                         userId: userId,
+                        isCriticalAttack: isCriticalAttack,
+                        reduceHealthBy: reduceHealthBy
                     }
+                    console.log(`Broadcasting player attack ${playerAttack}`)
                     broadcastToRoom(realm, roomId, playerAttackMessage)
                 }
                 break
-            case "sendAfterPlayerAttack":
-                {
-                    const { userId, serverPlayerAttack } = data
-                    const user = users[userId]
-                    if (!user) {
-                        console.log(`User ${userId} not found.`)
-                        return
-                    }
-                    const { realm, roomId } = user
+          
 
-                    const playerAfterAttackMessage = {
-                        type: "recieveAfterPlayerAttack",
-                        playerAttack: serverPlayerAttack,
-                    }
-                    broadcastToRoom(realm, roomId, playerAfterAttackMessage)
-                }
-                break
-
-            // case "sendAttackTimer":
-            //     monsterAttackTimer()
-            //     break
+        
             case "refillHealth": {
                 const { userId, amount, isCritical } = data
                 const user = users[userId]
@@ -893,27 +881,9 @@ function broadcastToRoom(realm, roomId, roomMsg) {
         if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify(roomMsg))
         }
-        console.log(`sent broadcastToRoom message:`)
+        console.log(`sent broadcastToRoom message: ${JSON.stringify(roomMsg)}`)
     })
 }
 
-
-
-// function monsterAttackTimer() {
-//     wss.clients.forEach(function each(client) {
-//         const playerId = client.playerId
-//         if (
-//             !monsterAttackTimers[playerId] ||
-//             Date.now() - monsterAttackTimers[playerId] >= 2000
-//         ) {
-//             monsterAttackTimers[playerId] = Date.now()
-//             client.send(
-//                 JSON.stringify({
-//                     type: "recieveAttackTimer",
-//                 })
-//             )
-//         }
-//     })
-// }
 
 console.log("Connected to Dice Master WebSocket Server Heroku App")
