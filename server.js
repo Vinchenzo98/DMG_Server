@@ -10,7 +10,6 @@ function generatePlayerId() {
 const realms = {}
 const users = {}
 
-//let monsterAttackTimers = {}
 
 wss.on("connection", (ws) => {
     const playerId = generatePlayerId()
@@ -174,12 +173,20 @@ wss.on("connection", (ws) => {
                 
                     let roomToJoin = realms[realm][roomName];
                     let roomLeaving = users[userId]?.roomId; 
-    
-                  
+                    console.log(`Room to join: ${roomToJoin}`)
+                    
                     if (users[userId]) {
                         // User exists, check if the room to join is full
                         if (roomToJoin.length >= 3) {
-                            ws.send(JSON.stringify({ type: "roomFullOnJoin", message: "Room is full" }));
+
+                            const roomMessage = {
+                                roomId: roomToJoin, 
+                                message: "Room is full" 
+                            }
+                            ws.send(JSON.stringify({ 
+                                    type: "roomFullOnJoin",
+                                    message: roomMessage
+                                }));
                             return; 
                         } else {
                             // User is leaving their current room
@@ -413,9 +420,9 @@ wss.on("connection", (ws) => {
                         playerHp,
                         playerEther
                     } = data
-                    const user = users[userId]
-                
-                  console.log(`player data: ${playerName}, HP: ${playerHp}, ID: ${userId}, KILLS: ${playerEther}`)
+                    const user = users[userId]   
+                    console.log(`Inside changePlayerStats`)
+                    console.log(`player data: ${playerName}, HP: ${playerHp}, ID: ${userId}, KILLS: ${playerEther}`)
 
                     if (!user) {
                         console.log(`User ${userId} not found.`)
@@ -423,6 +430,7 @@ wss.on("connection", (ws) => {
                     }
                     const { realm, roomId } = user
 
+                    console.log(`player realm ${realm} and player room ${roomId}`)
                     broadcastToRoom(realm, roomId, {
                         type: "changePlayerStatReceive",
                         userId: userId,
@@ -880,8 +888,8 @@ function broadcastToRoom(realm, roomId, roomMsg) {
     room.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify(roomMsg))
+            console.log(`sent broadcastToRoom message: ${JSON.stringify(roomMsg)}`)
         }
-        console.log(`sent broadcastToRoom message: ${JSON.stringify(roomMsg)}`)
     })
 }
 
